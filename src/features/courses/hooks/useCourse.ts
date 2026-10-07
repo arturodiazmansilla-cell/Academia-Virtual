@@ -29,7 +29,7 @@ export function useCourse(courseId: string | undefined) {
     reload();
   }, [reload]);
 
-  async function updateCourse(patch: Partial<Pick<Course, "title" | "description" | "subject" | "level">>) {
+  async function updateCourse(patch: Partial<Pick<Course, "title" | "description" | "subject" | "level" | "grade_category" | "grade_number">>) {
     if (!courseId) return { error: "Curso no encontrado." };
     const { error } = await supabase
       .from("courses")

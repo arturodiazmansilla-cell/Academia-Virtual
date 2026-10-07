@@ -9,12 +9,18 @@ const statusLabel: Record<Course["status"], string> = {
 };
 
 export function CourseCard({ course }: { course: Course }) {
+  const gradeLabel =
+    course.grade_category && course.grade_number
+      ? `${course.grade_number}° de ${course.grade_category === "primaria" ? "Primaria" : "Secundaria"} · `
+      : "";
+
   return (
     <Link to={`/cursos/${course.id}`} className="course-row">
       <span className={`status-bar ${course.status}`} />
       <div className="course-row-info">
         <h3>{course.title}</h3>
         <p className="course-meta">
+          {gradeLabel}
           {course.subject}
           {course.level ? ` · ${course.level}` : ""}
         </p>

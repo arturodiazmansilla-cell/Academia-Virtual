@@ -17,9 +17,19 @@ export function HomePage() {
           <Link to="/cursos">Ir a mis cursos →</Link>
         </p>
       )}
+      {(profile?.role === "alumno" || profile?.role === "admin") && (
+        <p>
+          <Link to="/catalogo">Explorar el catálogo de cursos →</Link>
+        </p>
+      )}
+      {profile?.role === "alumno" && (
+        <p>
+          <Link to="/mis-cursos">Ver mis cursos →</Link>
+        </p>
+      )}
       <p>
-        La vista del alumno, las actividades dinámicas y el panel de
-        autorización de accesos se agregan en los siguientes módulos.
+        Las actividades dinámicas, el progreso y el panel de autorización de
+        accesos se agregan en los siguientes módulos.
       </p>
     </>
   );

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CourseTopic } from "../../../shared/types/database.types";
+import { TopicContentSection } from "./TopicContentSection";
 
 interface Props {
   topics: CourseTopic[];
@@ -78,6 +79,8 @@ export function TopicList({ topics, onAdd, onUpdate, onDelete, onMove }: Props) 
                   {index + 1}. {topic.title}
                 </strong>
                 {topic.description && <p>{topic.description}</p>}
+                {/* NUEVO: módulo 3 — contenido del tema (video, Word, PowerPoint) */}
+                <TopicContentSection topicId={topic.id} />
               </div>
               <div className="topic-actions">
                 <button onClick={() => startEdit(topic)} className="secondary">

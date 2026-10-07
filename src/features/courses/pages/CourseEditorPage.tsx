@@ -1,19 +1,90 @@
 import { useState, type FormEvent } from "react";
 import { useParams, Link } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import { useCourse } from "../hooks/useCourse";
 import { useCourseTopics } from "../hooks/useCourseTopics";
 import { TopicList } from "../components/TopicList";
+import type { Course, GradeCategory } from "../../../shared/types/database.types";
+
+function PublishSection({
+  course,
+  onPublish,
+  onUnpublish,
+  busy,
+}: {
+  course: Course;
+  onPublish: () => void;
+  onUnpublish: () => void;
+  busy: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const enrollmentUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/inscripcion/${course.id}`
+      : "";
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(enrollmentUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  if (course.status !== "publicado") {
+    return (
+      <div className="topic-actions" style={{ marginBottom: "1rem" }}>
+        <button type="button" onClick={onPublish} disabled={busy}>
+          {busy ? "Publicando…" : "Publicar curso"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <section style={{ marginBottom: "1.5rem" }}>
+      <h2>Inscripción de alumnos</h2>
+      <p className="course-meta">
+        Comparte este link o el QR: el alumno deja sus datos y tú lo habilitas
+        desde <Link to="/solicitudes">Solicitudes</Link>.
+      </p>
+      <div className="topic-actions" style={{ marginBottom: "0.75rem" }}>
+        <input
+          value={enrollmentUrl}
+          readOnly
+          onFocus={(e) => e.target.select()}
+          style={{ flex: 1, minWidth: "16rem" }}
+        />
+        <button type="button" className="secondary" onClick={copyLink}>
+          {copied ? "¡Copiado!" : "Copiar link"}
+        </button>
+      </div>
+      <QRCodeSVG value={enrollmentUrl} size={180} />
+      <div className="topic-actions" style={{ marginTop: "0.75rem" }}>
+        <button type="button" className="secondary" onClick={onUnpublish} disabled={busy}>
+          {busy ? "Actualizando…" : "Volver a borrador"}
+        </button>
+      </div>
+    </section>
+  );
+}
 
 export function CourseEditorPage() {
   const { courseId } = useParams<{ courseId: string }>();
-  const { course, loading, error, updateCourse } = useCourse(courseId);
+  const { course, loading, error, updateCourse, updateStatus } = useCourse(courseId);
   const { topics, addTopic, updateTopic, deleteTopic, moveTopic } = useCourseTopics(courseId);
 
   const [editingInfo, setEditingInfo] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [subject, setSubject] = useState("");
   const [level, setLevel] = useState("");
+  const [gradeCategory, setGradeCategory] = useState<"" | GradeCategory>("");
+  const [gradeNumber, setGradeNumber] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
 
   function startEditInfo() {
@@ -22,12 +93,21 @@ export function CourseEditorPage() {
     setDescription(course.description ?? "");
     setSubject(course.subject);
     setLevel(course.level ?? "");
+    setGradeCategory(course.grade_category ?? "");
+    setGradeNumber(course.grade_number ? String(course.grade_number) : "");
     setEditingInfo(true);
   }
 
   async function handleSaveInfo(e: FormEvent) {
     e.preventDefault();
-    const { error } = await updateCourse({ title, description, subject, level });
+    const { error } = await updateCourse({
+      title,
+      description,
+      subject,
+      level,
+      grade_category: gradeCategory || null,
+      grade_number: gradeNumber ? parseInt(gradeNumber, 10) : null,
+    });
     if (error) {
       setSaveError(error);
       return;
@@ -40,9 +120,44 @@ export function CourseEditorPage() {
   if (error) return <p role="alert">{error}</p>;
   if (!course) return <p>Curso no encontrado.</p>;
 
+  async function handlePublish() {
+    if (!course) return;
+    const ok = window.confirm(
+      `¿Publicar "${course.title}"?\n\nAparecerá en el catálogo y se generará su link/QR de inscripción para alumnos.`
+    );
+    if (!ok) return;
+    setPublishing(true);
+    setPublishError(null);
+    const { error } = await updateStatus("publicado");
+    setPublishing(false);
+    if (error) setPublishError(error);
+  }
+
+  async function handleUnpublish() {
+    if (!course) return;
+    const ok = window.confirm(
+      `¿Volver "${course.title}" a borrador?\n\nDejará de aparecer en el catálogo y el link/QR de inscripción dejará de funcionar.`
+    );
+    if (!ok) return;
+    setPublishing(true);
+    setPublishError(null);
+    const { error } = await updateStatus("borrador");
+    setPublishing(false);
+    if (error) setPublishError(error);
+  }
+
   return (
     <>
       <Link to="/cursos" className="eyebrow">← Mis cursos</Link>
+
+      {publishError && <p role="alert">{publishError}</p>}
+
+      <PublishSection
+        course={course}
+        onPublish={handlePublish}
+        onUnpublish={handleUnpublish}
+        busy={publishing}
+      />
 
       {editingInfo ? (
         <form onSubmit={handleSaveInfo} className="course-form">
@@ -62,6 +177,29 @@ export function CourseEditorPage() {
             Nivel
             <input value={level} onChange={(e) => setLevel(e.target.value)} />
           </label>
+          <label>
+            Etapa educativa
+            <select
+              value={gradeCategory}
+              onChange={(e) => setGradeCategory(e.target.value as "" | GradeCategory)}
+              required
+            >
+              <option value="">Seleccionar…</option>
+              <option value="primaria">Primaria</option>
+              <option value="secundaria">Secundaria</option>
+            </select>
+          </label>
+          <label>
+            Grado
+            <select value={gradeNumber} onChange={(e) => setGradeNumber(e.target.value)} required>
+              <option value="">Seleccionar…</option>
+              {[1, 2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>
+                  {n}°
+                </option>
+              ))}
+            </select>
+          </label>
           {saveError && <p role="alert">{saveError}</p>}
           <div className="topic-actions">
             <button type="submit">Guardar</button>
@@ -75,6 +213,9 @@ export function CourseEditorPage() {
           <div>
             <h1>{course.title}</h1>
             <p className="course-meta">
+              {course.grade_category && course.grade_number
+                ? `${course.grade_number}° de ${course.grade_category === "primaria" ? "Primaria" : "Secundaria"} · `
+                : ""}
               {course.subject}
               {course.level ? ` · ${course.level}` : ""} — estado: {course.status}
             </p>

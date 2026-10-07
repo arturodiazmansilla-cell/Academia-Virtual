@@ -5,35 +5,76 @@
 export type UserRole = "admin" | "instructor" | "alumno";
 export type ProfileStatus = "activo" | "suspendido";
 export type CourseStatus = "borrador" | "en_revision" | "publicado" | "rechazado";
+export type GradeCategory = "primaria" | "secundaria";
+export type EnrollmentRequestStatus = "pendiente" | "aprobado" | "rechazado";
+export type TopicContentType = "video" | "word" | "powerpoint";
+export type ConversionStatus = "pendiente" | "procesando" | "listo" | "error" | "no_aplica";
 
-export interface Profile {
+export type Profile = {
   id: string;
   full_name: string;
   role: UserRole;
   status: ProfileStatus;
   created_at: string;
-}
+};
 
-export interface Course {
+export type Course = {
   id: string;
   title: string;
   description: string | null;
   subject: string;
   level: string | null;
+  grade_category: GradeCategory | null;
+  grade_number: number | null;
   instructor_id: string | null;
   status: CourseStatus;
   created_at: string;
   updated_at: string;
-}
+};
 
-export interface CourseTopic {
+export type CourseTopic = {
   id: string;
   course_id: string;
   title: string;
   description: string | null;
   order_index: number;
   created_at: string;
-}
+};
+
+// NUEVO: módulo 4 (vista del alumno)
+export type CourseEnrollment = {
+  id: string;
+  course_id: string;
+  student_id: string;
+  enrolled_at: string;
+};
+
+// NUEVO: módulo 6 (solicitudes de acceso con link/QR)
+export type EnrollmentRequest = {
+  id: string;
+  course_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  status: EnrollmentRequestStatus;
+  created_at: string;
+  reviewed_at: string | null;
+};
+
+// NUEVO: módulo 3
+export type TopicContent = {
+  id: string;
+  topic_id: string;
+  content_type: TopicContentType;
+  file_name: string;
+  original_file_url: string;
+  pdf_file_url: string | null;
+  conversion_status: ConversionStatus;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export interface Database {
   public: {
@@ -42,6 +83,7 @@ export interface Database {
         Row: Profile;
         Insert: Omit<Profile, "created_at"> & { created_at?: string };
         Update: Partial<Omit<Profile, "id">>;
+        Relationships: [];
       };
       courses: {
         Row: Course;
@@ -50,12 +92,59 @@ export interface Database {
           status?: CourseStatus;
         };
         Update: Partial<Omit<Course, "id">>;
+        Relationships: [];
       };
       course_topics: {
         Row: CourseTopic;
         Insert: Omit<CourseTopic, "id" | "created_at"> & { id?: string };
         Update: Partial<Omit<CourseTopic, "id" | "course_id">>;
+        Relationships: [];
       };
+      // NUEVO: módulo 4 (vista del alumno)
+      course_enrollments: {
+        Row: CourseEnrollment;
+        Insert: Omit<CourseEnrollment, "id" | "enrolled_at"> & {
+          id?: string;
+          enrolled_at?: string;
+        };
+        Update: Partial<Omit<CourseEnrollment, "id">>;
+        Relationships: [];
+      };
+      // NUEVO: módulo 6 (solicitudes de acceso con link/QR)
+      enrollment_requests: {
+        Row: EnrollmentRequest;
+        Insert: Omit<EnrollmentRequest, "id" | "created_at" | "reviewed_at" | "status"> & {
+          id?: string;
+          created_at?: string;
+          reviewed_at?: string | null;
+          status?: EnrollmentRequestStatus;
+        };
+        Update: Partial<Omit<EnrollmentRequest, "id" | "course_id">>;
+        Relationships: [];
+      };
+      // NUEVO: módulo 3
+      topic_content: {
+        Row: TopicContent;
+        Insert: Omit<
+          TopicContent,
+          "id" | "created_at" | "updated_at" | "pdf_file_url" | "conversion_status" | "error_message"
+        > & {
+          id?: string;
+          pdf_file_url?: string | null;
+          conversion_status?: ConversionStatus;
+          error_message?: string | null;
+        };
+        Update: Partial<Omit<TopicContent, "id" | "topic_id">>;
+        Relationships: [];
+      };
+    };
+    // Requerido por @supabase/supabase-js >= 2.46 (igual que lo genera el CLI).
+    // Sin esto, createClient<Database> no infiere las tablas y todo es `never`.
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
     };
   };
 }

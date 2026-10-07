@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import type { Course } from "../../../shared/types/database.types";
+import type { Course, GradeCategory } from "../../../shared/types/database.types";
 import { useAuth } from "../../auth/hooks/useAuth";
 
 export function useCourses() {
@@ -34,6 +34,8 @@ export function useCourses() {
     description: string;
     subject: string;
     level: string;
+    gradeCategory: GradeCategory | null;
+    gradeNumber: number | null;
   }) {
     if (!user) return { error: "No hay sesión activa." };
 
@@ -44,6 +46,8 @@ export function useCourses() {
         description: input.description || null,
         subject: input.subject,
         level: input.level || null,
+        grade_category: input.gradeCategory,
+        grade_number: input.gradeNumber,
         instructor_id: user.id,
       })
       .select()
