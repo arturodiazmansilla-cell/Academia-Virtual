@@ -78,23 +78,33 @@ serve(async (req) => {
   }
 
   try {
-    const { request_id } = await req.json();
-    if (!request_id) {
-      return new Response(JSON.stringify({ error: "Falta request_id" }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
+    const { request_id, course_id, email } = await req.json();
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, getServiceKey());
 
-    const { data: solicitud, error } = await supabase
-      .from("enrollment_requests")
-      .select("*, courses(title)")
-      .eq("id", request_id)
-      .single();
+    // La página pública no puede leer el id recién insertado (RLS solo
+    // permite insertar), así que también se acepta buscar por curso+correo.
+    let solicitud = null;
+    if (request_id) {
+      const { data, error } = await supabase
+        .from("enrollment_requests")
+        .select("*, courses(title)")
+        .eq("id", request_id)
+        .single();
+      if (!error) solicitud = data;
+    } else if (course_id && email) {
+      const { data, error } = await supabase
+        .from("enrollment_requests")
+        .select("*, courses(title)")
+        .eq("course_id", course_id)
+        .eq("email", String(email).toLowerCase())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!error) solicitud = data;
+    }
 
-    if (error || !solicitud) {
+    if (!solicitud) {
       return new Response(JSON.stringify({ error: "Solicitud no encontrada" }), {
         status: 404,
         headers: corsHeaders,

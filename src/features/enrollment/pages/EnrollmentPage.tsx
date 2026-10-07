@@ -46,17 +46,13 @@ export function EnrollmentPage() {
     setSubmitting(true);
     setFormError(null);
 
-    const { data, error } = await supabase
-      .from("enrollment_requests")
-      .insert({
-        course_id: courseId,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-      })
-      .select("id")
-      .single();
+    const { error } = await supabase.from("enrollment_requests").insert({
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone.trim(),
+      course_id: courseId,
+    });
 
     if (error) {
       setSubmitting(false);
@@ -68,11 +64,12 @@ export function EnrollmentPage() {
       return;
     }
 
-    // Avisa al administrador (correo + recordatorio). Si falla, la
-    // solicitud igual quedó guardada; no se bloquea al alumno.
+    // Avisa al administrador (correo + recordatorio). La función ubica la
+    // solicitud por curso+correo. Si falla, la solicitud igual quedó
+    // guardada; no se bloquea al alumno.
     try {
       await supabase.functions.invoke("notificar-solicitud", {
-        body: { request_id: data.id },
+        body: { course_id: courseId, email: email.trim().toLowerCase() },
       });
     } catch {
       // silencioso: best-effort

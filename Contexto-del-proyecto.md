@@ -93,6 +93,23 @@ Fecha: 06/10/2026
 - **Pendiente del equipo**: aplicar migración 0008, `npm install`,
   desplegar las 2 functions, configurar secrets/Resend/WhatsApp (ver LEEME).
 
+## Fix link/QR en localhost (06/10/2026)
+- El link/QR se generaba con `window.location.origin`: en local salía
+  `http://localhost:5173/...`, inalcanzable desde el celular del alumno.
+- Ahora usa `VITE_PUBLIC_URL` si está definida (URL de Netlify), si no el
+  origen actual. Si el link es localhost, muestra un aviso bajo el QR.
+- `.env.example` documenta `VITE_PUBLIC_URL`.
+- Verificado: `netlify.toml` ya tiene el redirect SPA (`/*` -> /index.html),
+  así que `/inscripcion/:courseId` funciona en producción.
+
+## Fix envío de solicitud pública (06/10/2026)
+- El formulario público fallaba al enviar: insertaba con `.select("id")`
+  y RLS no permite a anon LEER `enrollment_requests` (solo insertar), así
+  que el `RETURNING` era rechazado.
+- `EnrollmentPage` ahora inserta sin pedir el id e invoca
+  `notificar-solicitud` con `{ course_id, email }`; la función ubica la
+  solicitud por curso+correo (sigue aceptando `request_id`).
+
 ## REGLAS
 - No cambiar tecnologías.
 - No eliminar funcionalidades existentes.
