@@ -253,11 +253,14 @@ serve(async (req) => {
     }
     D("solicitud encontrada, estado:", solicitud.status);
 
-    if (solicitud.status !== "pendiente") {
+    if (solicitud.status !== "pendiente" && solicitud.status !== "rechazado") {
       return new Response(
         JSON.stringify({ ok: true, info: `La solicitud ya estaba: ${solicitud.status}` }),
         { headers: corsHeaders }
       );
+    }
+    if (solicitud.status === "rechazado") {
+      D("reaprobando solicitud previamente rechazada/revocada");
     }
 
     // Marca como aprobada

@@ -58,6 +58,13 @@ function RequestRow({
             </button>
           </div>
         )}
+        {request.status === "rechazado" && (
+          <div className="topic-actions">
+            <button type="button" disabled={busy} onClick={() => onApprove(request)}>
+              {busy ? "Aprobando…" : "Aprobar"}
+            </button>
+          </div>
+        )}
       </td>
     </tr>
   );
