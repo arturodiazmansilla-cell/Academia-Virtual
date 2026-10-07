@@ -109,8 +109,9 @@ export function EnrollmentPage() {
           </p>
           <p>
             Cuando el instructor la apruebe, recibirás un correo a{" "}
-            <strong>{email}</strong> con los pasos para entrar. Luego crea tu
-            cuenta con ese mismo correo para ver el curso.
+            <strong>{email}</strong> (y un WhatsApp si diste tu número) con tu{" "}
+            <strong>enlace de acceso directo</strong>: tu cuenta se crea
+            automáticamente, no necesitas registrarte.
           </p>
         </div>
       </div>

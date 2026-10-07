@@ -17,17 +17,42 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function pickFromParsed(parsed: unknown): string | null {
+  if (typeof parsed === "string" && parsed) return parsed;
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const o = parsed as Record<string, unknown>;
+    if (typeof o["default"] === "string" && o["default"]) return o["default"] as string;
+    for (const v of Object.values(o)) {
+      if (typeof v === "string" && v) return v;
+    }
+  }
+  if (Array.isArray(parsed)) {
+    for (const k of parsed) {
+      if (k && typeof k === "object" && typeof (k as { api_key?: unknown }).api_key === "string") {
+        const ak = (k as { api_key: string }).api_key;
+        if (ak) return ak;
+      }
+    }
+    if (typeof parsed[0] === "string" && parsed[0]) return parsed[0] as string;
+  }
+  return null;
+}
+
 function getServiceKey(): string {
+  // 1) Clave service_role clásica (JWT): la preferida, sin problemas de formato.
+  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legacy) return legacy;
+  // 2) Formato nuevo.
   const raw = Deno.env.get("SUPABASE_SECRET_KEYS");
-  if (!raw) {
-    throw new Error("Falta la variable SUPABASE_SECRET_KEYS.");
+  if (raw) {
+    try {
+      const key = pickFromParsed(JSON.parse(raw));
+      if (key) return key;
+    } catch {
+      if (/^sb_secret_/.test(raw)) return raw;
+    }
   }
-  const keys = JSON.parse(raw);
-  const key = keys?.default;
-  if (!key) {
-    throw new Error("SUPABASE_SECRET_KEYS no tiene una clave 'default'.");
-  }
-  return key;
+  throw new Error("Sin clave de servicio utilizable (ni SUPABASE_SERVICE_ROLE_KEY ni SUPABASE_SECRET_KEYS)");
 }
 
 // Link "Agregar a Google Calendar" para mañana 09:00 (La Paz, UTC-4)

@@ -22,11 +22,13 @@ function RequestRow({
   request,
   onApprove,
   onReject,
+  onRevoke,
   busy,
 }: {
   request: EnrollmentRequestWithCourse;
   onApprove: (r: EnrollmentRequestWithCourse) => void;
   onReject: (r: EnrollmentRequestWithCourse) => void;
+  onRevoke: (r: EnrollmentRequestWithCourse) => void;
   busy: boolean;
 }) {
   return (
@@ -49,6 +51,13 @@ function RequestRow({
             </button>
           </div>
         )}
+        {request.status === "aprobado" && (
+          <div className="topic-actions">
+            <button type="button" className="danger" disabled={busy} onClick={() => onRevoke(request)}>
+              {busy ? "Revocando…" : "Revocar acceso"}
+            </button>
+          </div>
+        )}
       </td>
     </tr>
   );
@@ -56,7 +65,7 @@ function RequestRow({
 
 export function RequestsPage() {
   const [tab, setTab] = useState<EnrollmentRequestStatus | "todas">("pendiente");
-  const { requests, loading, error, busyId, approve, reject } = useEnrollmentRequests(tab);
+  const { requests, loading, error, busyId, approve, reject, revoke } = useEnrollmentRequests(tab);
   const [actionError, setActionError] = useState<string | null>(null);
 
   async function handleApprove(r: EnrollmentRequestWithCourse) {
@@ -77,6 +86,16 @@ export function RequestsPage() {
     setActionError(null);
     const { error } = await reject(r.id);
     if (error) setActionError(`No se pudo rechazar: ${error}`);
+  }
+
+  async function handleRevoke(r: EnrollmentRequestWithCourse) {
+    const ok = window.confirm(
+      `¿Revocar el acceso de ${r.first_name} ${r.last_name} al curso "${r.course_title ?? ""}"?\n\nEl alumno perderá el acceso al curso de inmediato y la solicitud pasará a Rechazadas.`
+    );
+    if (!ok) return;
+    setActionError(null);
+    const { error } = await revoke(r.id);
+    if (error) setActionError(`No se pudo revocar: ${error}`);
   }
 
   return (
@@ -131,6 +150,7 @@ export function RequestsPage() {
                 request={r}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                onRevoke={handleRevoke}
                 busy={busyId === r.id}
               />
             ))}

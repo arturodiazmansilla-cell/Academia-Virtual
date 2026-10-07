@@ -101,5 +101,22 @@ export function useEnrollmentRequests(status: EnrollmentRequestStatus | "todas" 
     }
   }
 
-  return { requests, loading, error, busyId, reload, approve, reject };
+  async function revoke(id: string) {
+    setBusyId(id);
+    try {
+      const { data, error } = await supabase.functions.invoke("revocar-acceso", {
+        body: { request_id: id },
+      });
+      if (error) return { error: error.message };
+      if (data && (data as { error?: string }).error) {
+        return { error: (data as { error: string }).error };
+      }
+      await reload();
+      return { error: null };
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return { requests, loading, error, busyId, reload, approve, reject, revoke };
 }
