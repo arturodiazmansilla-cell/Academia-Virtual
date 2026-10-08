@@ -3,7 +3,7 @@
 // Menú lateral estilo mockup: panel oscuro redondeado con avatar,
 // "Catálogo" expandible por categorías y grados, e items según el rol.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { usePendingRequestsCount } from "../features/requests/hooks/usePendingRequestsCount";
@@ -48,7 +48,17 @@ export function Sidebar() {
   const canBrowseCatalog = isStudent || role === "admin";
 
   // Árbol del catálogo: solo categorías/grados con cursos publicados
-  const { courses } = usePublishedCourses();
+  const { courses, reload: reloadCourses } = usePublishedCourses();
+
+  // Refresca el árbol al navegar (p. ej. después de publicar un curso)
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    reloadCourses();
+  }, [location.pathname, reloadCourses]);
   const tree = useMemo(() => {
     if (!canBrowseCatalog) return [];
     return CATEGORIES.map((cat) => {
