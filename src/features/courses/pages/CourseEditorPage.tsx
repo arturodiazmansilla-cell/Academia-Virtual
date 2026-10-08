@@ -5,6 +5,7 @@ import { useCourse } from "../hooks/useCourse";
 import { useCourseTopics } from "../hooks/useCourseTopics";
 import { TopicList } from "../components/TopicList";
 import type { Course, GradeCategory } from "../../../shared/types/database.types";
+import { gradeLabel as buildGradeLabel } from "../../../shared/utils/categories";
 
 function PublishSection({
   course,
@@ -18,10 +19,14 @@ function PublishSection({
   busy: boolean;
 }) {
   const [copied, setCopied] = useState(false);
-  const enrollmentUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/inscripcion/${course.id}`
-      : "";
+  // Base del link: VITE_PUBLIC_URL si está definida (p. ej. la URL de Netlify),
+  // si no, el origen actual. Así el QR siempre apunta a la versión pública.
+  const baseUrl =
+    (import.meta.env.VITE_PUBLIC_URL as string | undefined)?.replace(/\/$/, "") ||
+    (typeof window !== "undefined" ? window.location.origin : "");
+  const enrollmentUrl = baseUrl ? `${baseUrl}/inscripcion/${course.id}` : "";
+  const isLocalhost =
+    enrollmentUrl.includes("localhost") || enrollmentUrl.includes("127.0.0.1");
 
   async function copyLink() {
     try {
@@ -62,6 +67,13 @@ function PublishSection({
         </button>
       </div>
       <QRCodeSVG value={enrollmentUrl} size={180} />
+      {isLocalhost && (
+        <p role="alert" style={{ marginTop: "0.75rem" }}>
+          Este link solo funciona en tu computadora (localhost). Para compartirlo
+          con alumnos, despliega la app y copia el link desde la versión publicada,
+          o define VITE_PUBLIC_URL con tu URL de Netlify.
+        </p>
+      )}
       <div className="topic-actions" style={{ marginTop: "0.75rem" }}>
         <button type="button" className="secondary" onClick={onUnpublish} disabled={busy}>
           {busy ? "Actualizando…" : "Volver a borrador"}
@@ -100,13 +112,14 @@ export function CourseEditorPage() {
 
   async function handleSaveInfo(e: FormEvent) {
     e.preventDefault();
+    const isGradeCat = gradeCategory === "primaria" || gradeCategory === "secundaria";
     const { error } = await updateCourse({
       title,
       description,
       subject,
       level,
       grade_category: gradeCategory || null,
-      grade_number: gradeNumber ? parseInt(gradeNumber, 10) : null,
+      grade_number: isGradeCat && gradeNumber ? parseInt(gradeNumber, 10) : null,
     });
     if (error) {
       setSaveError(error);
@@ -187,11 +200,18 @@ export function CourseEditorPage() {
               <option value="">Seleccionar…</option>
               <option value="primaria">Primaria</option>
               <option value="secundaria">Secundaria</option>
+              <option value="tecnico">Curso técnico</option>
+              <option value="avanzado">Avanzado</option>
             </select>
           </label>
           <label>
             Grado
-            <select value={gradeNumber} onChange={(e) => setGradeNumber(e.target.value)} required>
+            <select
+              value={gradeNumber}
+              onChange={(e) => setGradeNumber(e.target.value)}
+              required={gradeCategory === "primaria" || gradeCategory === "secundaria"}
+              disabled={gradeCategory !== "primaria" && gradeCategory !== "secundaria"}
+            >
               <option value="">Seleccionar…</option>
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>
@@ -213,8 +233,8 @@ export function CourseEditorPage() {
           <div>
             <h1>{course.title}</h1>
             <p className="course-meta">
-              {course.grade_category && course.grade_number
-                ? `${course.grade_number}° de ${course.grade_category === "primaria" ? "Primaria" : "Secundaria"} · `
+              {course.grade_category
+                ? `${buildGradeLabel(course.grade_category, course.grade_number)} · `
                 : ""}
               {course.subject}
               {course.level ? ` · ${course.level}` : ""} — estado: {course.status}

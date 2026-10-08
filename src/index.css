@@ -216,29 +216,78 @@ p[role="alert"] {
   color: var(--color-muted);
 }
 
-/* ---------- App shell (sidebar layout) ---------- */
+/* ---------- App shell (sidebar layout estilo mockup) ---------- */
 
 .app-shell {
   display: flex;
   min-height: 100vh;
+  background: var(--color-bg);
 }
 
 .app-sidebar {
-  width: 220px;
+  width: 248px;
   flex-shrink: 0;
   background: var(--color-sidebar);
   color: var(--color-sidebar-text);
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1rem;
+  padding: 1.25rem 0.9rem;
+  margin: 0.9rem 0 0.9rem 0.9rem;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  max-height: calc(100vh - 1.8rem);
+  position: sticky;
+  top: 0.9rem;
+  overflow-y: auto;
 }
 
 .app-sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.app-sidebar .brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--color-accent);
+  color: #1c2530;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.app-sidebar .brand-name {
   font-family: var(--font-display);
   color: white;
-  font-size: 1.15rem;
-  margin-bottom: 2rem;
-  padding: 0 0.5rem;
+  font-size: 1.02rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-sidebar .avatar-row {
+  display: flex;
+  padding: 0 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.app-sidebar .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .app-sidebar nav {
@@ -249,22 +298,108 @@ p[role="alert"] {
 }
 
 .app-sidebar nav a,
-.app-sidebar nav .nav-item {
+.app-sidebar nav .nav-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   color: var(--color-sidebar-text);
-  padding: 0.55rem 0.65rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.92rem;
   text-decoration: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
-.app-sidebar nav a:hover {
+.app-sidebar nav a:hover,
+.app-sidebar nav .nav-toggle:hover {
   background: rgba(255, 255, 255, 0.06);
   text-decoration: none;
+  color: white;
 }
 
-.app-sidebar nav a.active {
-  background: var(--color-primary-light);
+.app-sidebar nav a.active,
+.app-sidebar nav .nav-toggle.active {
+  background: rgba(255, 255, 255, 0.1);
   color: white;
+}
+
+.app-sidebar nav a svg,
+.app-sidebar nav .nav-toggle svg {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.app-sidebar .badge {
+  margin-left: auto;
+  background: var(--color-accent);
+  color: #1c2530;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+.app-sidebar .chevron {
+  margin-left: auto;
+  display: inline-flex;
+  opacity: 0.7;
+}
+
+/* Submenú del catálogo */
+.app-sidebar .nav-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.15rem 0 0.35rem 1.1rem;
+  padding-left: 0.7rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.app-sidebar .nav-sub a {
+  padding: 0.42rem 0.6rem;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+.app-sidebar .nav-sub a.sub-active {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+  font-weight: 600;
+}
+
+.app-sidebar .nav-sub-row {
+  display: flex;
+  align-items: center;
+}
+
+.app-sidebar .nav-sub-row a {
+  flex: 1;
+}
+
+.app-sidebar .mini-toggle {
+  background: transparent;
+  border: 0;
+  color: var(--color-sidebar-text);
+  cursor: pointer;
+  padding: 0.3rem 0.4rem;
+  display: inline-flex;
+  border-radius: 6px;
+}
+
+.app-sidebar .mini-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.app-sidebar .grade-link {
+  font-size: 0.8rem !important;
+  padding-left: 1rem !important;
+  opacity: 0.92;
 }
 
 .app-sidebar .user-box {
@@ -295,6 +430,48 @@ p[role="alert"] {
 }
 .app-sidebar .user-box button:hover {
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* Migas de pan + etiquetas del catálogo */
+.breadcrumb {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin-bottom: 0.4rem;
+}
+
+.breadcrumb a {
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+  color: var(--color-ink);
+}
+
+.course-tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 760px) {
+  .app-sidebar {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    max-height: none;
+    position: static;
+  }
+  .app-shell {
+    flex-direction: column;
+  }
 }
 
 .theme-switcher {

@@ -13,6 +13,7 @@ import { MyCoursesPage } from "../features/student/pages/MyCoursesPage";
 import { StudentCoursePage } from "../features/student/pages/StudentCoursePage";
 import { EnrollmentPage } from "../features/enrollment/pages/EnrollmentPage";
 import { RequestsPage } from "../features/requests/pages/RequestsPage";
+import { SoportePage } from "../features/support/pages/SoportePage";
 
 export const router = createBrowserRouter([
   {
@@ -72,6 +73,34 @@ export const router = createBrowserRouter([
         <RoleGate allow={["alumno", "admin"]}>
           <CatalogPage />
         </RoleGate>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/catalogo/:categoria",
+    element: (
+      <ProtectedRoute>
+        <RoleGate allow={["alumno", "admin"]}>
+          <CatalogPage />
+        </RoleGate>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/catalogo/:categoria/:grado",
+    element: (
+      <ProtectedRoute>
+        <RoleGate allow={["alumno", "admin"]}>
+          <CatalogPage />
+        </RoleGate>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/soporte",
+    element: (
+      <ProtectedRoute>
+        <SoportePage />
       </ProtectedRoute>
     ),
   },

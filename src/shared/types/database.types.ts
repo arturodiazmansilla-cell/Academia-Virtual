@@ -5,7 +5,7 @@
 export type UserRole = "admin" | "instructor" | "alumno";
 export type ProfileStatus = "activo" | "suspendido";
 export type CourseStatus = "borrador" | "en_revision" | "publicado" | "rechazado";
-export type GradeCategory = "primaria" | "secundaria";
+export type GradeCategory = "primaria" | "secundaria" | "tecnico" | "avanzado";
 export type EnrollmentRequestStatus = "pendiente" | "aprobado" | "rechazado";
 export type TopicContentType = "video" | "word" | "powerpoint";
 export type ConversionStatus = "pendiente" | "procesando" | "listo" | "error" | "no_aplica";

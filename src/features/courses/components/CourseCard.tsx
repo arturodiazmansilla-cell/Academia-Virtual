@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Course } from "../../../shared/types/database.types";
+import { gradeLabel as buildGradeLabel } from "../../../shared/utils/categories";
 
 const statusLabel: Record<Course["status"], string> = {
   borrador: "Borrador",
@@ -9,10 +10,9 @@ const statusLabel: Record<Course["status"], string> = {
 };
 
 export function CourseCard({ course }: { course: Course }) {
-  const gradeLabel =
-    course.grade_category && course.grade_number
-      ? `${course.grade_number}° de ${course.grade_category === "primaria" ? "Primaria" : "Secundaria"} · `
-      : "";
+  const gradeLabel = course.grade_category
+    ? `${buildGradeLabel(course.grade_category, course.grade_number)} · `
+    : "";
 
   return (
     <Link to={`/cursos/${course.id}`} className="course-row">
