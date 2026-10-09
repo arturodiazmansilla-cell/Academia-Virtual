@@ -43,10 +43,15 @@ export function useCourse(courseId: string | undefined) {
 
   async function updateStatus(status: CourseStatus) {
     if (!courseId) return { error: "Curso no encontrado." };
-    const { error } = await supabase
-      .from("courses")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", courseId);
+    const patch: { status: CourseStatus; updated_at: string; published_at?: string | null } = {
+      status,
+      updated_at: new Date().toISOString(),
+    };
+    // Marca la fecha de publicación para resaltar cursos nuevos;
+    // al volver a borrador se limpia.
+    if (status === "publicado") patch.published_at = new Date().toISOString();
+    if (status === "borrador") patch.published_at = null;
+    const { error } = await supabase.from("courses").update(patch).eq("id", courseId);
 
     if (error) return { error: error.message };
     await reload();

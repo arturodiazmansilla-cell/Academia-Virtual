@@ -28,6 +28,7 @@ export type Course = {
   grade_number: number | null;
   instructor_id: string | null;
   status: CourseStatus;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -88,9 +89,10 @@ export interface Database {
       };
       courses: {
         Row: Course;
-        Insert: Omit<Course, "id" | "created_at" | "updated_at" | "status"> & {
+        Insert: Omit<Course, "id" | "created_at" | "updated_at" | "status" | "published_at"> & {
           id?: string;
           status?: CourseStatus;
+          published_at?: string | null;
         };
         Update: Partial<Omit<Course, "id">>;
         Relationships: [];

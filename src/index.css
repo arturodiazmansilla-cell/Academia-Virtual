@@ -475,6 +475,24 @@ p[role="alert"] {
   margin-top: 0.5rem;
 }
 
+/* Antigüedad de publicación: verde = nuevo (≤ 1 semana),
+   amarillo = ya pasó la semana */
+.course-row.curso-nuevo {
+  background: rgba(46, 125, 50, 0.12);
+  border-radius: 8px;
+}
+
+.course-row.curso-semana {
+  background: rgba(255, 193, 7, 0.13);
+  border-radius: 8px;
+}
+
+.course-tag.tag-nuevo {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
 /* Filtros de la página Alumnos */
 .filters-row {
   display: flex;
