@@ -124,7 +124,7 @@ export function Sidebar() {
                     <div key={cat.key}>
                       <div className="nav-sub-row">
                         <NavLink to={catPath} end className={({ isActive }) => (isActive ? "active sub-active" : "")}>
-                          {cat.label}
+                          {cat.short}
                         </NavLink>
                         {cat.hasGrades && grades.length > 0 && (
                           <button

@@ -8,9 +8,9 @@ import type { GradeCategory } from "../types/database.types";
 
 export interface CategoryDef {
   key: GradeCategory;
-  /** Etiqueta en el menú, p. ej. "Educación Secundaria" */
+  /** Nombre completo, p. ej. "Educación Secundaria" */
   label: string;
-  /** Nombre corto para migas de pan, p. ej. "Secundaria" */
+  /** Nombre corto para el menú lateral y migas de pan, p. ej. "Secundaria" */
   short: string;
   /** Si lista grados (1-6) debajo */
   hasGrades: boolean;
