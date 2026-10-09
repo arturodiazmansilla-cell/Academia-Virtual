@@ -149,7 +149,10 @@ serve(async (req) => {
     const {
       data: { user },
     } = await supabaseA.auth.getUser();
-    if (!user) return json({ error: "No autorizado" }, 401);
+    if (!user) {
+      console.error("[academico-proxy] auth.getUser sin usuario");
+      return json({ error: "No autorizado" }, 401);
+    }
 
     const { data: profile } = await supabaseA
       .from("profiles")
@@ -157,12 +160,14 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
     if (!profile || !["admin", "instructor"].includes(profile.role)) {
+      console.error("[academico-proxy] rol sin permiso:", profile?.role);
       return json({ error: "Sin permiso" }, 403);
     }
 
-    const bUrl = Deno.env.get("ACADEMICO_URL");
-    const bKey = Deno.env.get("ACADEMICO_SERVICE_KEY");
+    const bUrl = (Deno.env.get("ACADEMICO_URL") ?? "").replace(/\/+$/, "");
+    const bKey = Deno.env.get("ACADEMICO_SERVICE_KEY") ?? "";
     if (!bUrl || !bKey) {
+      console.error("[academico-proxy] faltan secrets ACADEMICO_URL / ACADEMICO_SERVICE_KEY");
       return json({ error: "Puente con el colegio sin configurar (faltan secrets)" }, 500);
     }
 
@@ -190,6 +195,8 @@ serve(async (req) => {
         return json({ error: "Acción no válida" }, 400);
     }
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : "Error en el puente" }, 500);
+    const msg = e instanceof Error ? e.message : "Error en el puente";
+    console.error("[academico-proxy]", msg);
+    return json({ error: msg }, 500);
   }
 });

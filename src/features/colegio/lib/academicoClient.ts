@@ -51,7 +51,22 @@ export async function callAcademico<T>(action: string, params: Record<string, un
   const { data, error } = await supabase.functions.invoke("academico-proxy", {
     body: { action, ...params },
   });
-  if (error) throw new Error(error.message || "No se pudo contactar al colegio");
+  if (error) {
+    // Intenta extraer el mensaje real que devolvió la función
+    let detail = error.message || "No se pudo contactar al colegio";
+    try {
+      const res = (error as unknown as { context?: unknown }).context as
+        | { json?: () => Promise<unknown> }
+        | undefined;
+      if (res && typeof res.json === "function") {
+        const body = (await res.json()) as { error?: unknown };
+        if (body && body.error) detail = String(body.error);
+      }
+    } catch {
+      // se queda con el mensaje genérico
+    }
+    throw new Error(detail);
+  }
   if (data && typeof data === "object" && "error" in data) {
     throw new Error(String((data as { error: unknown }).error));
   }
