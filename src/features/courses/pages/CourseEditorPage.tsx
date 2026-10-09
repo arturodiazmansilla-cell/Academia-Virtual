@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useCourse } from "../hooks/useCourse";
 import { useCourseTopics } from "../hooks/useCourseTopics";
 import { TopicList } from "../components/TopicList";
+import { ColegioSection } from "../../colegio/components/ColegioSection";
 import type { Course, GradeCategory } from "../../../shared/types/database.types";
 import { gradeLabel as buildGradeLabel } from "../../../shared/utils/categories";
 
@@ -253,6 +254,8 @@ export function CourseEditorPage() {
         onDelete={deleteTopic}
         onMove={moveTopic}
       />
+
+      {courseId && <ColegioSection courseId={courseId} />}
     </>
   );
 }

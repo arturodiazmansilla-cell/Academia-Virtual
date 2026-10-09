@@ -42,6 +42,19 @@ export type CourseTopic = {
   created_at: string;
 };
 
+// NUEVO: vinculación con el Sistema Académico del colegio
+export type CursoVinculacion = {
+  virtual_course_id: string;
+  colegio_curso_id: string;
+  colegio_curso_nombre: string;
+  colegio_paralelo_id: string | null;
+  colegio_paralelo_nombre: string;
+  colegio_materia_id: string | null;
+  colegio_materia_nombre: string;
+  created_at: string;
+  updated_at: string;
+};
+
 // NUEVO: módulo 4 (vista del alumno)
 export type CourseEnrollment = {
   id: string;
@@ -138,6 +151,16 @@ export interface Database {
           error_message?: string | null;
         };
         Update: Partial<Omit<TopicContent, "id" | "topic_id">>;
+        Relationships: [];
+      };
+      // NUEVO: vinculación con el colegio
+      curso_vinculaciones: {
+        Row: CursoVinculacion;
+        Insert: Omit<CursoVinculacion, "created_at" | "updated_at"> & {
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<CursoVinculacion, "virtual_course_id">>;
         Relationships: [];
       };
     };
