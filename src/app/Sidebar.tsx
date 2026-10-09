@@ -95,20 +95,27 @@ export function Sidebar() {
 
         {canBrowseCatalog && (
           <div className="nav-group">
-            <button
-              type="button"
-              className={`nav-toggle${catalogActive ? " active" : ""}`}
-              onClick={() => setCatalogOpen((v) => !v)}
-              aria-expanded={catalogOpen}
-            >
-              <Icon d={ICONS.catalog} /> Cursos
-              <span className="chevron"><Chevron open={catalogOpen} /></span>
-            </button>
+            <div className={`nav-toggle${catalogActive ? " active" : ""}`}>
+              <NavLink
+                to="/catalogo"
+                end
+                className="nav-toggle-link"
+                onClick={() => setCatalogOpen(true)}
+              >
+                <Icon d={ICONS.catalog} /> Cursos
+              </NavLink>
+              <button
+                type="button"
+                className="mini-toggle"
+                onClick={() => setCatalogOpen((v) => !v)}
+                aria-expanded={catalogOpen}
+                aria-label="Mostrar categorías"
+              >
+                <Chevron open={catalogOpen} />
+              </button>
+            </div>
             {catalogOpen && (
               <div className="nav-sub">
-                <NavLink to="/catalogo" end className={({ isActive }) => (isActive ? "active sub-active" : "")}>
-                  Todos los cursos
-                </NavLink>
                 {tree.map(({ cat, grades }) => {
                   const catPath = `/catalogo/${cat.key}`;
                   const catActive = location.pathname.startsWith(catPath);

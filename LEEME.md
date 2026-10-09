@@ -1,12 +1,10 @@
-# "Catálogo" -> "Cursos" + admin ve todos los cursos (08/10/2026)
+# Cursos directo sin "Todos los cursos" (08/10/2026)
 
 ## Qué cambia (solo frontend, sin base de datos)
-- En el menú lateral "Catálogo" ahora dice **Cursos**.
-- Al entrar a Cursos:
-  - El **alumno** ve solo los cursos publicados (como antes).
-  - El **administrador** ve **todos** los cursos (publicados y borradores),
-    con etiqueta de estado (Borrador/Publicado/...) y botones Editar y Ver.
-- Textos "catálogo" en la app ahora dicen "Cursos".
+- Se quitó la opción "Todos los cursos" del submenú.
+- Al presionar **Cursos** se muestran directamente todos los cursos
+  (publicados para el alumno, todos para el administrador).
+- La flecha a la derecha sigue expandiendo/contrayendo las categorías.
 
 ## Pasos
 1. Extrae este zip DENTRO de tu proyecto:
@@ -14,5 +12,5 @@
    (acepta sobrescribir)
 2. Comandos git (uno por uno):
    git add .
-   git commit -m "Menu Cursos: admin ve todos los cursos"
+   git commit -m "Cursos abre directo sin opcion Todos los cursos"
    git push

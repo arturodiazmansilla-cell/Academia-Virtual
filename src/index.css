@@ -334,6 +334,20 @@ p[role="alert"] {
   opacity: 0.85;
 }
 
+/* Enlace "Cursos": ocupa el encabezado y navega directo a todos los cursos */
+.app-sidebar nav .nav-toggle-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+
+.app-sidebar nav .nav-toggle .mini-toggle {
+  margin-left: auto;
+}
+
 .app-sidebar .badge {
   margin-left: auto;
   background: var(--color-accent);
@@ -350,7 +364,7 @@ p[role="alert"] {
   opacity: 0.7;
 }
 
-/* Submenú del catálogo */
+/* Submenú de cursos */
 .app-sidebar .nav-sub {
   display: flex;
   flex-direction: column;
