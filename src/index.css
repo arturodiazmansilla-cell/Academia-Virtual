@@ -493,6 +493,79 @@ p[role="alert"] {
   color: #fff;
 }
 
+/* ---------- Tablas de la sección Colegio ---------- */
+.colegio-tabla-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+table.colegio-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.colegio-tabla th,
+.colegio-tabla td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.colegio-tabla thead th {
+  background: var(--color-bg);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-muted);
+  vertical-align: bottom;
+}
+
+.colegio-tabla tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.colegio-tabla td.num,
+.colegio-tabla th.num {
+  text-align: center;
+}
+
+/* Primera columna fija al desplazar */
+.colegio-tabla th:first-child,
+.colegio-tabla td:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--color-surface);
+  z-index: 1;
+  white-space: normal;
+  min-width: 10rem;
+}
+
+.colegio-tabla thead th:first-child {
+  background: var(--color-bg);
+}
+
+.colegio-tabla .eval-titulo {
+  display: block;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+  color: inherit;
+  max-width: 9rem;
+  white-space: normal;
+}
+
+.colegio-tabla .eval-meta {
+  display: block;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.7rem;
+  margin-top: 0.15rem;
+}
+
 /* Filtros de la página Alumnos */
 .filters-row {
   display: flex;

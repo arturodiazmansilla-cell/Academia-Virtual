@@ -16,6 +16,8 @@ import {
   type ColegioParalelo,
 } from "../lib/academicoClient";
 
+import { ReporteColegioModal } from "./ReporteColegioModal";
+
 interface Vinculo {
   virtual_course_id: string;
   colegio_curso_id: string;
@@ -54,6 +56,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
   const [asistencia, setAsistencia] = useState<{ sessions: number; students: ColegioAsistenciaAlumno[] } | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [showReport, setShowReport] = useState(false);
 
   async function loadVinculo() {
     setLoading(true);
@@ -212,6 +215,56 @@ export function ColegioSection({ courseId }: { courseId: string }) {
     loadTabData(which);
   }
 
+  const vinculoLabel = vinculo
+    ? `${vinculo.colegio_curso_nombre}${
+        vinculo.colegio_paralelo_nombre ? ` · Paralelo ${vinculo.colegio_paralelo_nombre}` : ""
+      }${vinculo.colegio_materia_nombre ? ` · ${vinculo.colegio_materia_nombre}` : ""}`
+    : "";
+
+  /** Datos del reporte según la pestaña activa */
+  function reportData() {
+    if (tab === "notas" && notas) {
+      const columnas = [
+        "Alumno",
+        ...notas.evaluations.map(
+          (e) => `${e.title} (${fmtFecha(e.evaluation_date)})`
+        ),
+        "Promedio",
+      ];
+      const filas = notas.students.map((s) => [
+        s.name,
+        ...notas.evaluations.map((e) => s.scores[e.id] ?? null),
+        s.promedio,
+      ]);
+      return {
+        titulo: "Notas del colegio",
+        columnas,
+        filas,
+        nombreBase: "notas-colegio",
+      };
+    }
+    if (tab === "asistencia" && asistencia) {
+      const columnas = ["Alumno", "Presente", "Ausente", "Atraso", "Licencia", "% Asistencia"];
+      const filas = asistencia.students.map((s) => [
+        s.name,
+        s.presente,
+        s.ausente,
+        s.tarde,
+        s.licencia,
+        s.porcentaje !== null ? `${s.porcentaje}%` : null,
+      ]);
+      return {
+        titulo: "Asistencia del colegio",
+        columnas,
+        filas,
+        nombreBase: "asistencia-colegio",
+      };
+    }
+    return null;
+  }
+
+  const report = showReport ? reportData() : null;
+
   if (loading) return <p>Cargando vinculación…</p>;
 
   return (
@@ -250,6 +303,20 @@ export function ColegioSection({ courseId }: { courseId: string }) {
             <button type="button" className="danger" onClick={handleDesvincular}>
               Desvincular
             </button>
+            <button
+              type="button"
+              className="secondary"
+              style={{ marginLeft: "auto" }}
+              onClick={() => setShowReport(true)}
+              disabled={
+                dataLoading ||
+                (tab === "notas"
+                  ? !notas || notas.evaluations.length === 0
+                  : !asistencia || asistencia.sessions === 0)
+              }
+            >
+              Reporte PDF / Excel
+            </button>
           </div>
 
           {dataLoading && <p>Cargando datos del colegio…</p>}
@@ -260,17 +327,20 @@ export function ColegioSection({ courseId }: { courseId: string }) {
               {notas.evaluations.length === 0 ? (
                 <p>Todavía no hay evaluaciones registradas en el colegio para esta vinculación.</p>
               ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table>
+                <div className="colegio-tabla-wrap">
+                  <table className="colegio-tabla">
                     <thead>
                       <tr>
                         <th>Alumno</th>
                         {notas.evaluations.map((e) => (
-                          <th key={e.id} title={`${e.title} · ${fmtFecha(e.evaluation_date)}`}>
-                            {e.title.length > 18 ? e.title.slice(0, 18) + "…" : e.title}
+                          <th key={e.id} className="num">
+                            <span className="eval-titulo">{e.title}</span>
+                            <span className="eval-meta">
+                              {fmtFecha(e.evaluation_date)} · máx {e.maximum_score}
+                            </span>
                           </th>
                         ))}
-                        <th>Promedio</th>
+                        <th className="num">Promedio</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -278,9 +348,11 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                         <tr key={s.id}>
                           <td>{s.name}</td>
                           {notas.evaluations.map((e) => (
-                            <td key={e.id}>{s.scores[e.id] ?? "—"}</td>
+                            <td key={e.id} className="num">
+                              {s.scores[e.id] ?? "—"}
+                            </td>
                           ))}
-                          <td>
+                          <td className="num">
                             <strong>{s.promedio ?? "—"}</strong>
                           </td>
                         </tr>
@@ -299,27 +371,27 @@ export function ColegioSection({ courseId }: { courseId: string }) {
               ) : (
                 <>
                   <p className="course-meta">{asistencia.sessions} sesiones registradas.</p>
-                  <div style={{ overflowX: "auto" }}>
-                    <table>
+                  <div className="colegio-tabla-wrap">
+                    <table className="colegio-tabla">
                       <thead>
                         <tr>
                           <th>Alumno</th>
-                          <th>Presente</th>
-                          <th>Ausente</th>
-                          <th>Atraso</th>
-                          <th>Licencia</th>
-                          <th>% Asistencia</th>
+                          <th className="num">Presente</th>
+                          <th className="num">Ausente</th>
+                          <th className="num">Atraso</th>
+                          <th className="num">Licencia</th>
+                          <th className="num">% Asistencia</th>
                         </tr>
                       </thead>
                       <tbody>
                         {asistencia.students.map((s) => (
                           <tr key={s.id}>
                             <td>{s.name}</td>
-                            <td>{s.presente}</td>
-                            <td>{s.ausente}</td>
-                            <td>{s.tarde}</td>
-                            <td>{s.licencia}</td>
-                            <td>
+                            <td className="num">{s.presente}</td>
+                            <td className="num">{s.ausente}</td>
+                            <td className="num">{s.tarde}</td>
+                            <td className="num">{s.licencia}</td>
+                            <td className="num">
                               <strong>{s.porcentaje !== null ? `${s.porcentaje}%` : "—"}</strong>
                             </td>
                           </tr>
@@ -330,6 +402,17 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                 </>
               )}
             </>
+          )}
+
+          {showReport && report && (
+            <ReporteColegioModal
+              titulo={report.titulo}
+              subtitulo={vinculoLabel}
+              columnas={report.columnas}
+              filas={report.filas}
+              nombreBase={report.nombreBase}
+              onClose={() => setShowReport(false)}
+            />
           )}
         </>
       ) : (
