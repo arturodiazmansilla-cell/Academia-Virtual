@@ -3,25 +3,18 @@
 // El alumno ve SOLO sus propias notas del colegio en el curso virtual
 // (la función puente empareja por nombre y no expone a los demás).
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   callAcademico,
   type ColegioEvaluation,
   type ColegioNotaAlumno,
 } from "../lib/academicoClient";
+import { agruparEvaluaciones, fmtFechaEval } from "../lib/criterios";
 
 interface MisNotas {
   evaluations: ColegioEvaluation[];
   student: ColegioNotaAlumno | null;
   vinculo: string;
-}
-
-function fmtFecha(fecha: string) {
-  return new Date(fecha + "T00:00:00").toLocaleDateString("es-BO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
 }
 
 export function MisNotasColegio({ courseId }: { courseId: string }) {
@@ -57,6 +50,8 @@ export function MisNotasColegio({ courseId }: { courseId: string }) {
   if (error) return <p role="alert">{error}</p>;
   if (!data) return null;
 
+  const grupos = agruparEvaluaciones(data.evaluations);
+
   return (
     <section style={{ marginTop: "2rem", marginBottom: "1.5rem" }}>
       <h2>Mis notas del colegio</h2>
@@ -75,6 +70,7 @@ export function MisNotasColegio({ courseId }: { courseId: string }) {
             <table className="colegio-tabla">
               <thead>
                 <tr>
+                  <th>Criterio</th>
                   <th>Evaluación</th>
                   <th>Fecha</th>
                   <th className="num">Nota</th>
@@ -82,13 +78,23 @@ export function MisNotasColegio({ courseId }: { courseId: string }) {
                 </tr>
               </thead>
               <tbody>
-                {data.evaluations.map((e) => (
-                  <tr key={e.id}>
-                    <td>{e.title}</td>
-                    <td>{fmtFecha(e.evaluation_date)}</td>
-                    <td className="num">{data.student!.scores[e.id] ?? "—"}</td>
-                    <td className="num">{e.maximum_score}</td>
-                  </tr>
+                {grupos.map((g) => (
+                  <Fragment key={g.key}>
+                    <tr>
+                      <td colSpan={5}>
+                        <strong>{g.etiqueta}</strong>
+                      </td>
+                    </tr>
+                    {g.evaluaciones.map((e) => (
+                      <tr key={e.id}>
+                        <td>{g.etiqueta.split(" · ")[0]}</td>
+                        <td>{e.title}</td>
+                        <td>{fmtFechaEval(e.evaluation_date)}</td>
+                        <td className="num">{data.student!.scores[e.id] ?? "—"}</td>
+                        <td className="num">{e.maximum_score}</td>
+                      </tr>
+                    ))}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

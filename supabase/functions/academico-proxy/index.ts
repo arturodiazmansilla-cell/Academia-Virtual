@@ -245,6 +245,8 @@ serve(async (req) => {
       .single();
     const role = profile?.role;
 
+    const body = await req.json();
+
     const staffOnly = ["cursos", "paralelos", "materias", "notas", "asistencia"];
     if (staffOnly.includes(body.action)) {
       if (!["admin", "instructor"].includes(role)) {
@@ -260,7 +262,6 @@ serve(async (req) => {
       return json({ error: "Puente con el colegio sin configurar (faltan secrets)" }, 500);
     }
 
-    const body = await req.json();
     switch (body.action) {
       case "cursos":
         return json(await bGet(bUrl, bKey, "courses?select=id,name,level&active=eq.true&order=name"));

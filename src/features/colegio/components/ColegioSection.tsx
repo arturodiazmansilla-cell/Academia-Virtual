@@ -16,7 +16,8 @@ import {
   type ColegioParalelo,
 } from "../lib/academicoClient";
 
-import { ReporteColegioModal } from "./ReporteColegioModal";
+import { ReporteColegioModal, type ColumnaReporte } from "./ReporteColegioModal";
+import { agruparEvaluaciones, fmtFechaEval } from "../lib/criterios";
 
 interface Vinculo {
   virtual_course_id: string;
@@ -26,14 +27,6 @@ interface Vinculo {
   colegio_paralelo_nombre: string;
   colegio_materia_id: string | null;
   colegio_materia_nombre: string;
-}
-
-function fmtFecha(fecha: string) {
-  return new Date(fecha + "T00:00:00").toLocaleDateString("es-BO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
 }
 
 export function ColegioSection({ courseId }: { courseId: string }) {
@@ -239,6 +232,10 @@ export function ColegioSection({ courseId }: { courseId: string }) {
   const notasPage = notasVisibles.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
   const asistenciaPage = asistenciaVisibles.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
 
+  /** Evaluaciones agrupadas por criterio (SER/SABER/HACER), ordenadas por fecha ascendente */
+  const gruposEval = notas ? agruparEvaluaciones(notas.evaluations) : [];
+  const evalsOrdenadas = gruposEval.flatMap((g) => g.evaluaciones);
+
   function renderPaginacion() {
     if (totalPages <= 1) return null;
     return (
@@ -273,19 +270,22 @@ export function ColegioSection({ courseId }: { courseId: string }) {
       }${vinculo.colegio_materia_nombre ? ` · ${vinculo.colegio_materia_nombre}` : ""}`
     : "";
 
-  /** Datos del reporte según la pestaña activa */
+  /** Datos del reporte según la pestaña activa (solo lo que se está mostrando, con el filtro aplicado) */
   function reportData() {
     if (tab === "notas" && notas) {
-      const columnas = [
-        "Alumno",
-        ...notas.evaluations.map(
-          (e) => `${e.title} (${fmtFecha(e.evaluation_date)})`
+      const columnas: ColumnaReporte[] = [
+        { texto: "Alumno" },
+        ...gruposEval.flatMap((g) =>
+          g.evaluaciones.map((e) => ({
+            texto: `${e.title} (${fmtFechaEval(e.evaluation_date)} · máx ${e.maximum_score})`,
+            grupo: g.etiqueta,
+          }))
         ),
-        "Promedio",
+        { texto: "Promedio" },
       ];
-      const filas = notas.students.map((s) => [
+      const filas = notasVisibles.map((s) => [
         s.name,
-        ...notas.evaluations.map((e) => s.scores[e.id] ?? null),
+        ...evalsOrdenadas.map((e) => s.scores[e.id] ?? null),
         s.promedio,
       ]);
       return {
@@ -296,8 +296,15 @@ export function ColegioSection({ courseId }: { courseId: string }) {
       };
     }
     if (tab === "asistencia" && asistencia) {
-      const columnas = ["Alumno", "Presente", "Ausente", "Atraso", "Licencia", "% Asistencia"];
-      const filas = asistencia.students.map((s) => [
+      const columnas: ColumnaReporte[] = [
+        { texto: "Alumno" },
+        { texto: "Presente" },
+        { texto: "Ausente" },
+        { texto: "Atraso" },
+        { texto: "Licencia" },
+        { texto: "% Asistencia" },
+      ];
+      const filas = asistenciaVisibles.map((s) => [
         s.name,
         s.presente,
         s.ausente,
@@ -316,6 +323,8 @@ export function ColegioSection({ courseId }: { courseId: string }) {
   }
 
   const report = showReport ? reportData() : null;
+  const subtituloReporte =
+    vinculoLabel + (search.trim() ? ` · Filtro: "${search.trim()}"` : "");
 
   if (loading) return <p>Cargando vinculación…</p>;
 
@@ -399,23 +408,32 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                   <table className="colegio-tabla">
                     <thead>
                       <tr>
-                        <th>Alumno</th>
-                        {notas.evaluations.map((e) => (
+                        <th rowSpan={2}>Alumno</th>
+                        {gruposEval.map((g) => (
+                          <th key={g.key} colSpan={g.evaluaciones.length} className="num">
+                            {g.etiqueta}
+                          </th>
+                        ))}
+                        <th rowSpan={2} className="num">
+                          Promedio
+                        </th>
+                      </tr>
+                      <tr>
+                        {evalsOrdenadas.map((e) => (
                           <th key={e.id} className="num">
                             <span className="eval-titulo">{e.title}</span>
                             <span className="eval-meta">
-                              {fmtFecha(e.evaluation_date)} · máx {e.maximum_score}
+                              {fmtFechaEval(e.evaluation_date)} · máx {e.maximum_score}
                             </span>
                           </th>
                         ))}
-                        <th className="num">Promedio</th>
                       </tr>
                     </thead>
                     <tbody>
                       {notasPage.map((s) => (
                         <tr key={s.id}>
                           <td>{s.name}</td>
-                          {notas.evaluations.map((e) => (
+                          {evalsOrdenadas.map((e) => (
                             <td key={e.id} className="num">
                               {s.scores[e.id] ?? "—"}
                             </td>
@@ -479,7 +497,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
           {showReport && report && (
             <ReporteColegioModal
               titulo={report.titulo}
-              subtitulo={vinculoLabel}
+              subtitulo={subtituloReporte}
               columnas={report.columnas}
               filas={report.filas}
               nombreBase={report.nombreBase}
