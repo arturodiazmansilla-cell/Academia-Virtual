@@ -14,6 +14,7 @@ import { StudentCoursePage } from "../features/student/pages/StudentCoursePage";
 import { EnrollmentPage } from "../features/enrollment/pages/EnrollmentPage";
 import { RequestsPage } from "../features/requests/pages/RequestsPage";
 import { SoportePage } from "../features/support/pages/SoportePage";
+import { AlumnosPage } from "../features/alumnos/pages/AlumnosPage";
 
 export const router = createBrowserRouter([
   {
@@ -130,6 +131,16 @@ export const router = createBrowserRouter([
       <ProtectedRoute>
         <RoleGate allow={["instructor", "admin"]}>
           <RequestsPage />
+        </RoleGate>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/alumnos",
+    element: (
+      <ProtectedRoute>
+        <RoleGate allow={["instructor", "admin"]}>
+          <AlumnosPage />
         </RoleGate>
       </ProtectedRoute>
     ),

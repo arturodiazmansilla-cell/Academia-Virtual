@@ -1,8 +1,8 @@
 // src/features/student/hooks/useEnrollments.ts
 //
-// Inscripciones del alumno actual: listar, inscribirse y cancelar
-// la inscripción. Mismo patrón que el resto de hooks del proyecto:
-// reload() y funciones que devuelven { error: string | null }.
+// Inscripciones ACTIVAS del alumno actual.
+// El acceso lo otorga solo el administrador (no hay auto-inscripción);
+// aquí el alumno solo puede ver y cancelar sus inscripciones.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../shared/lib/supabaseClient";
@@ -31,6 +31,7 @@ export function useEnrollments() {
       .from("course_enrollments")
       .select("*")
       .eq("student_id", user.id)
+      .eq("is_active", true)
       .order("enrolled_at", { ascending: false });
 
     if (error) {
@@ -46,21 +47,6 @@ export function useEnrollments() {
     reload();
   }, [reload]);
 
-  async function enroll(courseId: string) {
-    if (!user) return { error: "No hay sesión activa." };
-    const { error } = await supabase.from("course_enrollments").insert({
-      course_id: courseId,
-      student_id: user.id,
-    });
-    if (error) {
-      // Violación de unique (course_id, student_id): ya estaba inscrito
-      if (error.code === "23505") return { error: "Ya estás inscrito en este curso." };
-      return { error: error.message };
-    }
-    await reload();
-    return { error: null };
-  }
-
   async function unenroll(courseId: string) {
     if (!user) return { error: "No hay sesión activa." };
     const { error } = await supabase
@@ -73,5 +59,5 @@ export function useEnrollments() {
     return { error: null };
   }
 
-  return { enrollments, enrolledCourseIds, loading, error, reload, enroll, unenroll };
+  return { enrollments, enrolledCourseIds, loading, error, reload, unenroll };
 }

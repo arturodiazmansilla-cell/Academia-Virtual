@@ -3,10 +3,11 @@
 // Catálogo de cursos publicados, filtrable por categoría y grado
 // (rutas /catalogo, /catalogo/:categoria, /catalogo/:categoria/:grado).
 
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { usePublishedCourses, type PublishedCourse } from "../hooks/usePublishedCourses";
 import { useEnrollments } from "../hooks/useEnrollments";
+import { useMyRequests } from "../../requests/hooks/useMyRequests";
+import { useAuth } from "../../auth/hooks/useAuth";
 import {
   CATEGORIES,
   categoryLabel,
@@ -17,24 +18,25 @@ import {
 function CatalogCard({
   course,
   enrolled,
-  onEnroll,
+  requestStatus,
+  studentName,
+  studentEmail,
 }: {
   course: PublishedCourse;
   enrolled: boolean;
-  onEnroll: (courseId: string) => Promise<string | null>;
+  requestStatus: string | undefined;
+  studentName: string;
+  studentEmail: string;
 }) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleEnroll() {
-    setBusy(true);
-    setError(null);
-    const err = await onEnroll(course.id);
-    if (err) setError(err);
-    setBusy(false);
-  }
-
   const tag = course.subject || categoryLabel(course.grade_category);
+
+  // Nombre y apellido para prellenar el formulario de solicitud
+  const [firstName, ...rest] = studentName.trim().split(/\s+/);
+  const prefill = {
+    firstName: firstName ?? "",
+    lastName: rest.join(" "),
+    email: studentEmail,
+  };
 
   return (
     <div className="course-row catalog-card">
@@ -47,17 +49,27 @@ function CatalogCard({
           {course.instructor_name ? ` · Prof. ${course.instructor_name}` : ""}
         </p>
         <span className="course-tag">{tag}</span>
-        {error && <p role="alert">{error}</p>}
       </div>
       <div className="topic-actions">
         {enrolled ? (
           <Link to={`/aprender/${course.id}`} className="secondary">
             Ver curso
           </Link>
-        ) : (
-          <button type="button" onClick={handleEnroll} disabled={busy}>
-            {busy ? "Inscribiendo…" : "Inscribirme"}
+        ) : requestStatus === "pendiente" ? (
+          <button type="button" disabled title="Tu solicitud está en revisión">
+            Solicitud pendiente
           </button>
+        ) : requestStatus === "aprobado" ? (
+          <Link to={`/aprender/${course.id}`} className="secondary">
+            Ver curso
+          </Link>
+        ) : (
+          <Link
+            to={`/inscripcion/${course.id}`}
+            state={{ prefill }}
+          >
+            Solicitar acceso
+          </Link>
         )}
       </div>
     </div>
@@ -67,7 +79,9 @@ function CatalogCard({
 export function CatalogPage() {
   const { categoria, grado } = useParams<{ categoria?: string; grado?: string }>();
   const { courses, loading, error } = usePublishedCourses();
-  const { enrolledCourseIds, enroll } = useEnrollments();
+  const { enrolledCourseIds } = useEnrollments();
+  const { statusByCourse } = useMyRequests();
+  const { profile, user } = useAuth();
 
   const category = parseCategoryParam(categoria);
   const gradeNum = grado ? parseInt(grado, 10) : null;
@@ -80,11 +94,6 @@ export function CatalogPage() {
   });
 
   const catDef = CATEGORIES.find((c) => c.key === category);
-
-  async function handleEnroll(courseId: string): Promise<string | null> {
-    const { error } = await enroll(courseId);
-    return error;
-  }
 
   return (
     <>
@@ -128,7 +137,9 @@ export function CatalogPage() {
             key={course.id}
             course={course}
             enrolled={enrolledCourseIds.has(course.id)}
-            onEnroll={handleEnroll}
+            requestStatus={statusByCourse.get(course.id)}
+            studentName={profile?.full_name ?? ""}
+            studentEmail={user?.email ?? ""}
           />
         ))}
       </div>

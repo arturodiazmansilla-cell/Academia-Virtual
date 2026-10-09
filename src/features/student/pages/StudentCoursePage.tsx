@@ -76,7 +76,7 @@ export function StudentCoursePage() {
       <>
         <Link to="/catalogo" className="eyebrow">← Catálogo</Link>
         <h1>{course.title}</h1>
-        <p>Necesitas inscribirte para ver el contenido de este curso.</p>
+        <p>No tienes acceso a este curso. El acceso lo habilita tu instructor: solicítalo desde el catálogo.</p>
         <p>
           <Link to="/catalogo">Volver al catálogo →</Link>
         </p>

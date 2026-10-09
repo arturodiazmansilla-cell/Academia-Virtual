@@ -47,6 +47,7 @@ export type CourseEnrollment = {
   course_id: string;
   student_id: string;
   enrolled_at: string;
+  is_active: boolean;
 };
 
 // NUEVO: módulo 6 (solicitudes de acceso con link/QR)

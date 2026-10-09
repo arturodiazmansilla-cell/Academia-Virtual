@@ -461,6 +461,45 @@ p[role="alert"] {
   margin-top: 0.5rem;
 }
 
+/* Filtros de la página Alumnos */
+.filters-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.filters-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  min-width: 220px;
+}
+
+.status-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.15rem 0.7rem;
+}
+
+.status-pill.active {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.status-pill.inactive {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+tr.row-inactive td {
+  opacity: 0.65;
+}
+
 @media (max-width: 760px) {
   .app-sidebar {
     width: 100%;

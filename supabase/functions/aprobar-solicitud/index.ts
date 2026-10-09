@@ -304,10 +304,10 @@ serve(async (req) => {
       D("ERROR creando/buscando cuenta:", String(e));
     }
 
-    // --- 2. Inscribirlo directamente en el curso ---
+    // --- 2. Inscribirlo directamente en el curso (y reactivar si estaba inactivo) ---
     if (studentId) {
       const { error: errEnroll } = await supabase.from("course_enrollments").upsert(
-        { course_id: solicitud.course_id, student_id: studentId },
+        { course_id: solicitud.course_id, student_id: studentId, is_active: true },
         { onConflict: "course_id,student_id" }
       );
       D("inscripción directa error:", errEnroll?.message ?? null);

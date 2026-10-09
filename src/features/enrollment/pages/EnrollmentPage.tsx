@@ -5,18 +5,21 @@
 // instructor/admin la apruebe.
 
 import { useEffect, useState, type FormEvent } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "../../../shared/lib/supabaseClient";
 import type { Course } from "../../../shared/types/database.types";
 
 export function EnrollmentPage() {
   const { courseId } = useParams<{ courseId: string }>();
+  const location = useLocation();
+  // Si viene desde el catálogo con sesión iniciada, prellena nombre y correo
+  const prefill = (location.state as { prefill?: { firstName?: string; lastName?: string; email?: string } } | null)?.prefill;
   const [course, setCourse] = useState<Course | null>(null);
   const [loadingCourse, setLoadingCourse] = useState(true);
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState(prefill?.firstName ?? "");
+  const [lastName, setLastName] = useState(prefill?.lastName ?? "");
+  const [email, setEmail] = useState(prefill?.email ?? "");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);

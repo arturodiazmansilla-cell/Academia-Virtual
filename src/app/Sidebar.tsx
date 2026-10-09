@@ -25,6 +25,7 @@ const ICONS = {
   book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5",
   support: "M21 12a9 9 0 1 0-3.2 6.9L21 20l-1.2-3.1A8.9 8.9 0 0 0 21 12zM9 12h.01M12 12h.01M15 12h.01",
   requests: "M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75",
+  students: "M22 10L12 5 2 10l10 5 10-5zM6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5",
   admin: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
 };
 
@@ -154,6 +155,11 @@ export function Sidebar() {
         {isStudent && (
           <NavLink to="/mis-cursos" className={({ isActive }) => (isActive ? "active" : "")}>
             <Icon d={ICONS.book} /> Mis cursos
+          </NavLink>
+        )}
+        {canManageCourses && (
+          <NavLink to="/alumnos" className={({ isActive }) => (isActive ? "active" : "")}>
+            <Icon d={ICONS.students} /> Alumnos
           </NavLink>
         )}
         {canManageCourses && (
