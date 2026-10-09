@@ -57,6 +57,9 @@ export function ColegioSection({ courseId }: { courseId: string }) {
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const [showReport, setShowReport] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 15;
 
   async function loadVinculo() {
     setLoading(true);
@@ -212,7 +215,56 @@ export function ColegioSection({ courseId }: { courseId: string }) {
 
   function switchTab(which: "notas" | "asistencia") {
     setTab(which);
+    setPage(0);
     loadTabData(which);
+  }
+
+  function handleSearch(value: string) {
+    setSearch(value);
+    setPage(0);
+  }
+
+  /** Alumnos filtrados por el buscador (se aplica a ambas pestañas) */
+  function filtrarPorNombre<T extends { name: string }>(lista: T[]): T[] {
+    const q = search.trim().toLowerCase();
+    if (!q) return lista;
+    return lista.filter((s) => s.name.toLowerCase().includes(q));
+  }
+
+  const notasVisibles = notas ? filtrarPorNombre(notas.students) : [];
+  const asistenciaVisibles = asistencia ? filtrarPorNombre(asistencia.students) : [];
+  const visibles = tab === "notas" ? notasVisibles : asistenciaVisibles;
+  const totalPages = Math.max(1, Math.ceil(visibles.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+  const notasPage = notasVisibles.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+  const asistenciaPage = asistenciaVisibles.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
+
+  function renderPaginacion() {
+    if (totalPages <= 1) return null;
+    return (
+      <div className="topic-actions" style={{ marginTop: "0.75rem", alignItems: "center" }}>
+        <button
+          type="button"
+          className="secondary"
+          disabled={safePage === 0}
+          onClick={() => setPage(safePage - 1)}
+        >
+          ← Anterior
+        </button>
+        <span className="course-meta">
+          Página {safePage + 1} de {totalPages} · {visibles.length} alumno
+          {visibles.length === 1 ? "" : "s"}
+        </span>
+        <button
+          type="button"
+          className="secondary"
+          disabled={safePage >= totalPages - 1}
+          onClick={() => setPage(safePage + 1)}
+        >
+          Siguiente →
+        </button>
+      </div>
+    );
   }
 
   const vinculoLabel = vinculo
@@ -322,10 +374,26 @@ export function ColegioSection({ courseId }: { courseId: string }) {
           {dataLoading && <p>Cargando datos del colegio…</p>}
           {dataError && <p role="alert">{dataError}</p>}
 
+          {!dataLoading && !dataError && (
+            <div className="filters-row">
+              <label>
+                Buscar alumno
+                <input
+                  type="search"
+                  placeholder="Ej. María Pérez"
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </label>
+            </div>
+          )}
+
           {!dataLoading && !dataError && tab === "notas" && notas && (
             <>
               {notas.evaluations.length === 0 ? (
                 <p>Todavía no hay evaluaciones registradas en el colegio para esta vinculación.</p>
+              ) : notasPage.length === 0 ? (
+                <p>Sin alumnos que coincidan con la búsqueda.</p>
               ) : (
                 <div className="colegio-tabla-wrap">
                   <table className="colegio-tabla">
@@ -344,7 +412,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {notas.students.map((s) => (
+                      {notasPage.map((s) => (
                         <tr key={s.id}>
                           <td>{s.name}</td>
                           {notas.evaluations.map((e) => (
@@ -361,6 +429,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                   </table>
                 </div>
               )}
+              {renderPaginacion()}
             </>
           )}
 
@@ -368,6 +437,8 @@ export function ColegioSection({ courseId }: { courseId: string }) {
             <>
               {asistencia.sessions === 0 ? (
                 <p>Todavía no hay sesiones de clase registradas en el colegio para esta vinculación.</p>
+              ) : asistenciaPage.length === 0 ? (
+                <p>Sin alumnos que coincidan con la búsqueda.</p>
               ) : (
                 <>
                   <p className="course-meta">{asistencia.sessions} sesiones registradas.</p>
@@ -384,7 +455,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                         </tr>
                       </thead>
                       <tbody>
-                        {asistencia.students.map((s) => (
+                        {asistenciaPage.map((s) => (
                           <tr key={s.id}>
                             <td>{s.name}</td>
                             <td className="num">{s.presente}</td>
@@ -401,6 +472,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                   </div>
                 </>
               )}
+              {renderPaginacion()}
             </>
           )}
 

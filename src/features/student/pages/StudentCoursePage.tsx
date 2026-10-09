@@ -10,6 +10,7 @@ import { useCourseTopics } from "../../courses/hooks/useCourseTopics";
 import { useTopicContent } from "../../courses/hooks/useTopicContent";
 import { ContentViewer } from "../../courses/components/ContentViewer";
 import { useEnrollments } from "../hooks/useEnrollments";
+import { MisNotasColegio } from "../../colegio/components/MisNotasColegio";
 import { useAuth } from "../../auth/hooks/useAuth";
 
 function StudentTopicItem({ topicId, title, description }: { topicId: string; title: string; description: string | null }) {
@@ -111,6 +112,8 @@ export function StudentCoursePage() {
           />
         ))}
       </div>
+
+      {courseId && <MisNotasColegio courseId={courseId} />}
     </>
   );
 }

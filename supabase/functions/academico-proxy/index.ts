@@ -39,6 +39,90 @@ function fullName(s: { first_name?: string; last_name?: string } | null | undefi
   return `${s?.first_name ?? ""} ${s?.last_name ?? ""}`.trim() || "Sin nombre";
 }
 
+/** Normaliza un nombre para comparar (sin tildes, minúsculas, espacios simples) */
+function normName(s: string) {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function httpError(message: string, status: number) {
+  const e = new Error(message) as Error & { status: number };
+  e.status = status;
+  return e;
+}
+
+/**
+ * Notas del alumno que llama: verifica su identidad, exige inscripción
+ * activa al curso virtual (o ser personal) y devuelve SOLO su fila.
+ */
+async function misNotas(
+  bUrl: string,
+  bKey: string,
+  body: { virtual_course_id?: string },
+  userId: string
+) {
+  const virtualCourseId = body.virtual_course_id;
+  if (!virtualCourseId) throw httpError("Falta el curso", 400);
+
+  // Cliente con service_role para lecturas internas (el alumno no puede
+  // leer vinculaciones ni inscripciones ajenas por RLS)
+  const admin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false } }
+  );
+
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("full_name, role")
+    .eq("id", userId)
+    .single();
+  if (!profile) throw httpError("Perfil no encontrado", 404);
+
+  const isStaff = profile.role === "admin" || profile.role === "instructor";
+  if (!isStaff) {
+    const { data: enr } = await admin
+      .from("course_enrollments")
+      .select("id")
+      .eq("course_id", virtualCourseId)
+      .eq("student_id", userId)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (!enr) throw httpError("No estás inscrito en este curso", 403);
+  }
+
+  const { data: vinc } = await admin
+    .from("curso_vinculaciones")
+    .select("*")
+    .eq("virtual_course_id", virtualCourseId)
+    .maybeSingle();
+  if (!vinc) throw httpError("Curso sin vinculación con el colegio", 404);
+
+  const data = await notas(bUrl, bKey, {
+    curso_id: vinc.colegio_curso_id,
+    paralelo_id: vinc.colegio_paralelo_id ?? undefined,
+    materia_id: vinc.colegio_materia_id ?? undefined,
+  });
+
+  const target = normName(profile.full_name ?? "");
+  const student =
+    (data.students as { id: string; name: string }[]).find((s) => normName(s.name) === target) ??
+    null;
+
+  return {
+    evaluations: data.evaluations,
+    student,
+    vinculo:
+      `${vinc.colegio_curso_nombre}` +
+      (vinc.colegio_paralelo_nombre ? ` · Paralelo ${vinc.colegio_paralelo_nombre}` : "") +
+      (vinc.colegio_materia_nombre ? ` · ${vinc.colegio_materia_nombre}` : ""),
+  };
+}
+
 async function notas(
   bUrl: string,
   bKey: string,
@@ -159,9 +243,14 @@ serve(async (req) => {
       .select("role")
       .eq("id", user.id)
       .single();
-    if (!profile || !["admin", "instructor"].includes(profile.role)) {
-      console.error("[academico-proxy] rol sin permiso:", profile?.role);
-      return json({ error: "Sin permiso" }, 403);
+    const role = profile?.role;
+
+    const staffOnly = ["cursos", "paralelos", "materias", "notas", "asistencia"];
+    if (staffOnly.includes(body.action)) {
+      if (!["admin", "instructor"].includes(role)) {
+        console.error("[academico-proxy] rol sin permiso:", role);
+        return json({ error: "Sin permiso" }, 403);
+      }
     }
 
     const bUrl = (Deno.env.get("ACADEMICO_URL") ?? "").replace(/\/+$/, "");
@@ -191,12 +280,15 @@ serve(async (req) => {
         return json(await notas(bUrl, bKey, body));
       case "asistencia":
         return json(await asistencia(bUrl, bKey, body));
+      case "mis-notas":
+        return json(await misNotas(bUrl, bKey, body, user.id));
       default:
         return json({ error: "Acción no válida" }, 400);
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error en el puente";
+    const status = (e as { status?: number })?.status ?? 500;
     console.error("[academico-proxy]", msg);
-    return json({ error: msg }, 500);
+    return json({ error: msg }, status);
   }
 });
