@@ -132,7 +132,7 @@ async function notas(
   if (!curso_id || !materia_id) throw new Error("Falta el curso o la materia del colegio");
 
   let q =
-    `evaluations?select=id,title,evaluation_date,maximum_score,evaluation_types(name)` +
+    `evaluations?select=id,title,evaluation_date,maximum_score,dimension,evaluation_types(name)` +
     `&course_id=eq.${curso_id}&subject_id=eq.${materia_id}&order=evaluation_date`;
   if (paralelo_id) q += `&parallel_id=eq.${paralelo_id}`;
   const evaluations = await bGet(bUrl, bKey, q);

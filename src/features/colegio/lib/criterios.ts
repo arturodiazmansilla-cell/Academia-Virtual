@@ -5,12 +5,28 @@
 
 import type { ColegioEvaluation } from "./academicoClient";
 
-export type CriterioKey = "ser" | "saber" | "hacer" | "otro";
+export type CriterioKey = "ser" | "saber" | "hacer" | "autoevaluacion" | "otro";
 
-const ORDEN: CriterioKey[] = ["ser", "saber", "hacer", "otro"];
+const ORDEN: CriterioKey[] = ["ser", "saber", "hacer", "autoevaluacion", "otro"];
 
-/** Detecta el criterio por el nombre del tipo de evaluación del colegio. */
+/**
+ * Detecta el criterio de la evaluación.
+ * 1. La columna `dimension` del colegio (lo más confiable).
+ * 2. El puntaje máximo: el colegio usa 10/45/40 para SER/SABER/HACER.
+ * 3. El nombre del tipo de evaluación, como último recurso.
+ */
 export function criterioDe(ev: ColegioEvaluation): CriterioKey {
+  const d = (ev.dimension ?? "").toLowerCase().trim();
+  if (d === "ser") return "ser";
+  if (d === "saber") return "saber";
+  if (d === "hacer") return "hacer";
+  if (d === "autoevaluacion" || d === "autoevaluación") return "autoevaluacion";
+
+  const max = Number(ev.maximum_score);
+  if (max === 10) return "ser";
+  if (max === 45) return "saber";
+  if (max === 40) return "hacer";
+
   const t = (ev.evaluation_types?.name ?? "").toLowerCase();
   if (/\bsaber\b/.test(t)) return "saber";
   if (/\bhacer\b/.test(t)) return "hacer";
@@ -27,6 +43,8 @@ export function criterioEtiqueta(key: CriterioKey): string {
       return "SABER · Exámenes";
     case "hacer":
       return "HACER · Tareas";
+    case "autoevaluacion":
+      return "Autoevaluación";
     default:
       return "Otras";
   }

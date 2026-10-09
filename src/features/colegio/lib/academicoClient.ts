@@ -29,6 +29,8 @@ export interface ColegioEvaluation {
   title: string;
   evaluation_date: string;
   maximum_score: number;
+  /** Dimensión del colegio: ser | saber | hacer | autoevaluacion */
+  dimension: string | null;
   evaluation_types: { name: string } | null;
 }
 
