@@ -1,7 +1,8 @@
 // src/features/student/pages/CatalogPage.tsx
 //
-// Catálogo de cursos publicados, filtrable por categoría y grado
+// Sección "Cursos", filtrable por categoría y grado
 // (rutas /catalogo, /catalogo/:categoria, /catalogo/:categoria/:grado).
+// El alumno ve solo cursos publicados; el administrador ve todos.
 
 import { Link, useParams } from "react-router-dom";
 import { usePublishedCourses, type PublishedCourse } from "../hooks/usePublishedCourses";
@@ -15,18 +16,27 @@ import {
   parseCategoryParam,
 } from "../../../shared/utils/categories";
 
+const STATUS_LABEL: Record<string, string> = {
+  borrador: "Borrador",
+  en_revision: "En revisión",
+  publicado: "Publicado",
+  rechazado: "Rechazado",
+};
+
 function CatalogCard({
   course,
   enrolled,
   requestStatus,
   studentName,
   studentEmail,
+  isAdmin,
 }: {
   course: PublishedCourse;
   enrolled: boolean;
   requestStatus: string | undefined;
   studentName: string;
   studentEmail: string;
+  isAdmin: boolean;
 }) {
   const tag = course.subject || categoryLabel(course.grade_category);
 
@@ -40,7 +50,7 @@ function CatalogCard({
 
   return (
     <div className="course-row catalog-card">
-      <span className="status-bar publicado" />
+      <span className={`status-bar ${course.status}`} />
       <div className="course-row-info">
         <h3>{course.title}</h3>
         <p className="course-meta">
@@ -49,39 +59,54 @@ function CatalogCard({
           {course.instructor_name ? ` · Prof. ${course.instructor_name}` : ""}
         </p>
         <span className="course-tag">{tag}</span>
-      </div>
-      <div className="topic-actions">
-        {enrolled ? (
-          <Link to={`/aprender/${course.id}`} className="secondary">
-            Ver curso
-          </Link>
-        ) : requestStatus === "pendiente" ? (
-          <button type="button" disabled title="Tu solicitud está en revisión">
-            Solicitud pendiente
-          </button>
-        ) : requestStatus === "aprobado" ? (
-          <Link to={`/aprender/${course.id}`} className="secondary">
-            Ver curso
-          </Link>
-        ) : (
-          <Link
-            to={`/inscripcion/${course.id}`}
-            state={{ prefill }}
-          >
-            Solicitar acceso
-          </Link>
+        {isAdmin && (
+          <span className="course-tag" style={{ marginLeft: "0.5rem" }}>
+            {STATUS_LABEL[course.status] ?? course.status}
+          </span>
         )}
       </div>
+      {isAdmin ? (
+        <div className="topic-actions">
+          <Link to={`/cursos/${course.id}`}>Editar</Link>
+          <Link to={`/aprender/${course.id}`} className="secondary">
+            Ver
+          </Link>
+        </div>
+      ) : (
+        <div className="topic-actions">
+          {enrolled ? (
+            <Link to={`/aprender/${course.id}`} className="secondary">
+              Ver curso
+            </Link>
+          ) : requestStatus === "pendiente" ? (
+            <button type="button" disabled title="Tu solicitud está en revisión">
+              Solicitud pendiente
+            </button>
+          ) : requestStatus === "aprobado" ? (
+            <Link to={`/aprender/${course.id}`} className="secondary">
+              Ver curso
+            </Link>
+          ) : (
+            <Link
+              to={`/inscripcion/${course.id}`}
+              state={{ prefill }}
+            >
+              Solicitar acceso
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export function CatalogPage() {
   const { categoria, grado } = useParams<{ categoria?: string; grado?: string }>();
-  const { courses, loading, error } = usePublishedCourses();
+  const { profile, user } = useAuth();
+  const isAdmin = profile?.role === "admin";
+  const { courses, loading, error } = usePublishedCourses(isAdmin);
   const { enrolledCourseIds } = useEnrollments();
   const { statusByCourse } = useMyRequests();
-  const { profile, user } = useAuth();
 
   const category = parseCategoryParam(categoria);
   const gradeNum = grado ? parseInt(grado, 10) : null;
@@ -98,7 +123,7 @@ export function CatalogPage() {
   return (
     <>
       <nav className="breadcrumb" aria-label="Migas de pan">
-        <Link to="/catalogo">Catálogo</Link>
+        <Link to="/catalogo">Cursos</Link>
         {catDef && (
           <>
             <span aria-hidden> / </span>
@@ -119,10 +144,10 @@ export function CatalogPage() {
 
       <div className="page-header">
         <div>
-          <h1>Cursos disponibles</h1>
+          <h1>{isAdmin ? "Todos los cursos" : "Cursos disponibles"}</h1>
           <p className="course-meta">
-            {filtered.length} curso{filtered.length === 1 ? "" : "s"} publicado
-            {filtered.length === 1 ? "" : "s"}
+            {filtered.length} curso{filtered.length === 1 ? "" : "s"}
+            {isAdmin ? "" : " publicado" + (filtered.length === 1 ? "" : "s")}
             {catDef ? ` en ${validGrade ? gradeLabel(catDef.key, validGrade) : catDef.label}` : ""}
           </p>
         </div>
@@ -140,6 +165,7 @@ export function CatalogPage() {
             requestStatus={statusByCourse.get(course.id)}
             studentName={profile?.full_name ?? ""}
             studentEmail={user?.email ?? ""}
+            isAdmin={isAdmin}
           />
         ))}
       </div>
@@ -147,8 +173,8 @@ export function CatalogPage() {
       {!loading && !error && filtered.length === 0 && (
         <p>
           {category
-            ? "Todavía no hay cursos publicados en esta categoría."
-            : "Todavía no hay cursos publicados. Vuelve pronto."}
+            ? `Todavía no hay cursos${isAdmin ? "" : " publicados"} en esta categoría.`
+            : `Todavía no hay cursos${isAdmin ? "" : " publicados"}. Vuelve pronto.`}
         </p>
       )}
     </>

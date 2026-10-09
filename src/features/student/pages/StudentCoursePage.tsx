@@ -65,7 +65,7 @@ export function StudentCoursePage() {
   if (course.status !== "publicado" && !isAdmin) {
     return (
       <>
-        <Link to="/catalogo" className="eyebrow">← Catálogo</Link>
+        <Link to="/catalogo" className="eyebrow">← Cursos</Link>
         <p>Este curso no está disponible.</p>
       </>
     );
@@ -74,11 +74,11 @@ export function StudentCoursePage() {
   if (!enrolled && !isAdmin) {
     return (
       <>
-        <Link to="/catalogo" className="eyebrow">← Catálogo</Link>
+        <Link to="/catalogo" className="eyebrow">← Cursos</Link>
         <h1>{course.title}</h1>
-        <p>No tienes acceso a este curso. El acceso lo habilita tu instructor: solicítalo desde el catálogo.</p>
+        <p>No tienes acceso a este curso. El acceso lo habilita tu instructor: solicítalo desde la sección Cursos.</p>
         <p>
-          <Link to="/catalogo">Volver al catálogo →</Link>
+          <Link to="/catalogo">Volver a Cursos →</Link>
         </p>
       </>
     );

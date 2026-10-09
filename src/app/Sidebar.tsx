@@ -1,7 +1,7 @@
 // src/app/Sidebar.tsx
 //
 // Menú lateral estilo mockup: panel oscuro redondeado con avatar,
-// "Catálogo" expandible por categorías y grados, e items según el rol.
+// "Cursos" expandible por categorías y grados, e items según el rol.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -48,8 +48,8 @@ export function Sidebar() {
   const isStudent = role === "alumno";
   const canBrowseCatalog = isStudent || role === "admin";
 
-  // Árbol del catálogo: solo categorías/grados con cursos publicados
-  const { courses, reload: reloadCourses } = usePublishedCourses();
+  // Árbol de cursos: publicados para el alumno, todos para el admin
+  const { courses, reload: reloadCourses } = usePublishedCourses(role === "admin");
 
   // Refresca el árbol al navegar (p. ej. después de publicar un curso)
   const firstRender = useRef(true);
@@ -101,7 +101,7 @@ export function Sidebar() {
               onClick={() => setCatalogOpen((v) => !v)}
               aria-expanded={catalogOpen}
             >
-              <Icon d={ICONS.catalog} /> Catálogo
+              <Icon d={ICONS.catalog} /> Cursos
               <span className="chevron"><Chevron open={catalogOpen} /></span>
             </button>
             {catalogOpen && (

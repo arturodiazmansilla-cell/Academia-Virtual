@@ -19,7 +19,7 @@ export function HomePage() {
       )}
       {(profile?.role === "alumno" || profile?.role === "admin") && (
         <p>
-          <Link to="/catalogo">Explorar el catálogo de cursos →</Link>
+          <Link to="/catalogo">Explorar los cursos →</Link>
         </p>
       )}
       {profile?.role === "alumno" && (

@@ -136,7 +136,7 @@ export function CourseEditorPage() {
   async function handlePublish() {
     if (!course) return;
     const ok = window.confirm(
-      `¿Publicar "${course.title}"?\n\nAparecerá en el catálogo y se generará su link/QR de inscripción para alumnos.`
+      `¿Publicar "${course.title}"?\n\nAparecerá en la sección Cursos y se generará su link/QR de inscripción para alumnos.`
     );
     if (!ok) return;
     setPublishing(true);
@@ -149,7 +149,7 @@ export function CourseEditorPage() {
   async function handleUnpublish() {
     if (!course) return;
     const ok = window.confirm(
-      `¿Volver "${course.title}" a borrador?\n\nDejará de aparecer en el catálogo y el link/QR de inscripción dejará de funcionar.`
+      `¿Volver "${course.title}" a borrador?\n\nDejará de aparecer en la sección Cursos y el link/QR de inscripción dejará de funcionar.`
     );
     if (!ok) return;
     setPublishing(true);

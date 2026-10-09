@@ -1,7 +1,8 @@
 // src/features/student/hooks/usePublishedCourses.ts
 //
-// Catálogo del alumno: cursos con estado "publicado", incluyendo el nombre
-// del instructor. Solo lectura.
+// Cursos visibles en la sección "Cursos": para el alumno solo los publicados;
+// para el administrador todos (incluye borradores). Incluye el nombre del
+// instructor. Solo lectura.
 //
 // El nombre del instructor se obtiene con una segunda consulta (en lugar
 // de un join embebido) para no depender del nombre interno de la FK.
@@ -14,18 +15,18 @@ export interface PublishedCourse extends Course {
   instructor_name: string | null;
 }
 
-export function usePublishedCourses() {
+export function usePublishedCourses(includeAll = false) {
   const [courses, setCourses] = useState<PublishedCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
-    const { data: courseRows, error: courseError } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("status", "publicado")
-      .order("created_at", { ascending: false });
+    let query = supabase.from("courses").select("*").order("created_at", { ascending: false });
+    if (!includeAll) {
+      query = query.eq("status", "publicado");
+    }
+    const { data: courseRows, error: courseError } = await query;
 
     if (courseError) {
       setError(courseError.message);
@@ -55,7 +56,7 @@ export function usePublishedCourses() {
       }))
     );
     setLoading(false);
-  }, []);
+  }, [includeAll]);
 
   useEffect(() => {
     reload();

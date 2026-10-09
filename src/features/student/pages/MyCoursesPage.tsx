@@ -54,7 +54,7 @@ export function MyCoursesPage() {
           <p className="course-meta">{enrollments.length} inscripciones</p>
         </div>
         <Link to="/catalogo" className="secondary">
-          Explorar catálogo
+          Explorar cursos
         </Link>
       </div>
 
@@ -92,7 +92,7 @@ export function MyCoursesPage() {
       {!loading && !enrollError && courses.length === 0 && (
         <p>
           Todavía no estás inscrito en ningún curso.{" "}
-          <Link to="/catalogo">Explora el catálogo →</Link>
+          <Link to="/catalogo">Explora los cursos →</Link>
         </p>
       )}
     </>
