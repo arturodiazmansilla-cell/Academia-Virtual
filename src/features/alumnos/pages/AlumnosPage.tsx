@@ -2,13 +2,14 @@
 //
 // Administración de alumnos inscritos: ver, filtrar por nombre/curso,
 // desactivar/reactivar y desinscribir alumnos de un curso.
-// Incluye columna NRO y reportes PDF / Excel (carta vertical).
+// Reportes PDF/Excel (carta vertical) con vista previa antes de descargar.
 
 import { useEffect, useMemo, useState } from "react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import { supabase } from "../../../shared/lib/supabaseClient";
+import {
+  ReporteAlumnosModal,
+  type FilaReporteAlumnos,
+} from "../components/ReporteAlumnosModal";
 
 interface EnrollmentRow {
   id: string;
@@ -28,6 +29,7 @@ export function AlumnosPage() {
   const [courseFilter, setCourseFilter] = useState<string>("todas");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [showReport, setShowReport] = useState(false);
 
   async function reload() {
     setLoading(true);
@@ -77,68 +79,13 @@ export function AlumnosPage() {
       : (courses.find(([id]) => id === courseFilter)?.[1] ?? "");
 
   /** Filas del reporte (respeta los filtros aplicados en pantalla) */
-  function reportRows() {
-    return filtered.map((r, i) => ({
-      nro: i + 1,
-      alumno: r.student?.full_name ?? "—",
-      curso: r.course?.title ?? "—",
-      estado: r.is_active ? "Activo" : "Inactivo",
-      fecha: new Date(r.enrolled_at).toLocaleDateString("es-BO"),
-    }));
-  }
-
-  function fileStamp() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function exportPDF() {
-    const doc = new jsPDF({ unit: "mm", format: "letter", orientation: "portrait" });
-    const fecha = new Date().toLocaleDateString("es-BO", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-
-    doc.setFontSize(16);
-    doc.text("Reporte de alumnos inscritos", 14, 18);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Academia Virtual · ${fecha}`, 14, 25);
-    doc.text(`Curso: ${courseFilterLabel}${search.trim() ? ` · Filtro: ${search.trim()}` : ""}`, 14, 31);
-    doc.setTextColor(0);
-
-    const data = reportRows();
-    autoTable(doc, {
-      startY: 36,
-      head: [["Nro", "Alumno", "Curso", "Estado", "Inscrito"]],
-      body: data.map((d) => [d.nro, d.alumno, d.curso, d.estado, d.fecha]),
-      styles: { fontSize: 9, cellPadding: 2.5 },
-      headStyles: { fillColor: [22, 58, 51], textColor: 255, fontStyle: "bold" },
-      alternateRowStyles: { fillColor: [245, 246, 248] },
-      columnStyles: {
-        0: { halign: "center", cellWidth: 12 },
-        3: { halign: "center", cellWidth: 22 },
-        4: { halign: "center", cellWidth: 24 },
-      },
-    });
-
-    doc.save(`alumnos-inscritos-${fileStamp()}.pdf`);
-  }
-
-  function exportExcel() {
-    const data = reportRows().map((d) => ({
-      Nro: d.nro,
-      Alumno: d.alumno,
-      Curso: d.curso,
-      Estado: d.estado,
-      Inscrito: d.fecha,
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    ws["!cols"] = [{ wch: 6 }, { wch: 32 }, { wch: 32 }, { wch: 12 }, { wch: 14 }];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
-    XLSX.writeFile(wb, `alumnos-inscritos-${fileStamp()}.xlsx`);
-  }
+  const filasReporte: FilaReporteAlumnos[] = filtered.map((r, i) => ({
+    nro: i + 1,
+    alumno: r.student?.full_name ?? "—",
+    curso: r.course?.title ?? "—",
+    estado: r.is_active ? "Activo" : "Inactivo",
+    fecha: new Date(r.enrolled_at).toLocaleDateString("es-BO"),
+  }));
 
   async function handleToggleActive(r: EnrollmentRow) {
     const name = r.student?.full_name ?? "el alumno";
@@ -191,11 +138,13 @@ export function AlumnosPage() {
           </p>
         </div>
         <div className="topic-actions">
-          <button type="button" className="secondary" onClick={exportPDF} disabled={filtered.length === 0}>
-            Reporte PDF
-          </button>
-          <button type="button" className="secondary" onClick={exportExcel} disabled={filtered.length === 0}>
-            Reporte Excel
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => setShowReport(true)}
+            disabled={filtered.length === 0}
+          >
+            Reporte PDF / Excel
           </button>
         </div>
       </div>
@@ -279,6 +228,14 @@ export function AlumnosPage() {
             ))}
           </tbody>
         </table>
+      )}
+
+      {showReport && (
+        <ReporteAlumnosModal
+          filas={filasReporte}
+          filtroCurso={courseFilterLabel}
+          onClose={() => setShowReport(false)}
+        />
       )}
     </>
   );
