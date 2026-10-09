@@ -5,6 +5,9 @@
 
 import { supabase } from "../../../shared/lib/supabaseClient";
 
+const FUNCTIONS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+const ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
 export interface ColegioCurso {
   id: string;
   name: string;
@@ -48,27 +51,44 @@ export interface ColegioAsistenciaAlumno {
 }
 
 export async function callAcademico<T>(action: string, params: Record<string, unknown> = {}): Promise<T> {
-  const { data, error } = await supabase.functions.invoke("academico-proxy", {
-    body: { action, ...params },
-  });
-  if (error) {
-    // Intenta extraer el mensaje real que devolvió la función
-    let detail = error.message || "No se pudo contactar al colegio";
-    try {
-      const res = (error as unknown as { context?: unknown }).context as
-        | { json?: () => Promise<unknown> }
-        | undefined;
-      if (res && typeof res.json === "function") {
-        const body = (await res.json()) as { error?: unknown };
-        if (body && body.error) detail = String(body.error);
-      }
-    } catch {
-      // se queda con el mensaje genérico
-    }
-    throw new Error(detail);
+  // fetch directo (en vez de functions.invoke) para leer el mensaje
+  // de error exacto que devuelve la función.
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("No hay sesión iniciada");
+
+  let res: Response;
+  try {
+    res = await fetch(`${FUNCTIONS_URL}/academico-proxy`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: ANON_KEY,
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ action, ...params }),
+    });
+  } catch {
+    throw new Error("No se pudo contactar al puente del colegio");
   }
-  if (data && typeof data === "object" && "error" in data) {
-    throw new Error(String((data as { error: unknown }).error));
+
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    // respuesta sin JSON
   }
-  return data as T;
+
+  if (!res.ok) {
+    const msg =
+      body && typeof body === "object" && "error" in body
+        ? String((body as { error: unknown }).error)
+        : `El puente respondió ${res.status}`;
+    throw new Error(msg);
+  }
+  if (body && typeof body === "object" && "error" in body) {
+    throw new Error(String((body as { error: unknown }).error));
+  }
+  return body as T;
 }
