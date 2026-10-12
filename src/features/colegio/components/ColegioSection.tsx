@@ -17,6 +17,8 @@ import {
 } from "../lib/academicoClient";
 
 import { ReporteColegioModal, type ColumnaReporte } from "./ReporteColegioModal";
+import { ReportePlanillaModal } from "./ReportePlanillaModal";
+import { construirPlanilla } from "../lib/planilla";
 import { agruparEvaluaciones, criterioClase, fmtFechaEval, promedioGrupo } from "../lib/criterios";
 
 interface Vinculo {
@@ -316,34 +318,6 @@ export function ColegioSection({ courseId }: { courseId: string }) {
 
   /** Datos del reporte según la pestaña activa (solo lo que se está mostrando, con el filtro aplicado) */
   function reportData() {
-    if (tab === "notas" && notas) {
-      const columnas: ColumnaReporte[] = [
-        { texto: "Alumno" },
-        ...gruposEval.flatMap((g) => [
-          ...g.evaluaciones.map((e) => ({
-            texto: `${e.title} (${fmtFechaEval(e.evaluation_date)} · máx ${e.maximum_score})`,
-            grupo: g.etiqueta,
-            grupoKey: g.key,
-          })),
-          { texto: "Prom.", grupo: g.etiqueta, grupoKey: g.key },
-        ]),
-        { texto: "Prom." },
-      ];
-      const filas = notasVisibles.map((s) => [
-        s.name,
-        ...gruposEval.flatMap((g) => [
-          ...g.evaluaciones.map((e) => s.scores[e.id] ?? null),
-          promedioGrupo(s.scores, g.evaluaciones),
-        ]),
-        s.promedio,
-      ]);
-      return {
-        titulo: "Notas del colegio",
-        columnas,
-        filas,
-        nombreBase: "notas-colegio",
-      };
-    }
     if (tab === "asistencia" && asistencia) {
       const columnas: ColumnaReporte[] = [
         { texto: "Alumno" },
@@ -374,6 +348,15 @@ export function ColegioSection({ courseId }: { courseId: string }) {
   const report = showReport ? reportData() : null;
   const subtituloReporte =
     vinculoLabel + (search.trim() ? ` · Filtro: "${search.trim()}"` : "");
+
+  /** Planilla oficial para la pestaña Notas (con el filtro aplicado) */
+  const planillaNotas =
+    showReport && tab === "notas" && notas && vinculo
+      ? construirPlanilla(gruposEval, notasVisibles, {
+          area: vinculo.colegio_materia_nombre || "—",
+          curso: vinculo.colegio_curso_nombre || "—",
+        })
+      : null;
 
   if (loading) return <p>Cargando vinculación…</p>;
 
@@ -569,6 +552,13 @@ export function ColegioSection({ courseId }: { courseId: string }) {
             </>
           )}
 
+          {showReport && planillaNotas && (
+            <ReportePlanillaModal
+              planilla={planillaNotas}
+              filtro={search.trim() || undefined}
+              onClose={() => setShowReport(false)}
+            />
+          )}
           {showReport && report && (
             <ReporteColegioModal
               titulo={report.titulo}

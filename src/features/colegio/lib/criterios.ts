@@ -66,7 +66,8 @@ export function criterioClase(key: CriterioKey): string {
 
 /**
  * Promedio de un alumno en las evaluaciones de un grupo
- * (null si no tiene notas en ese criterio).
+ * (null si no tiene notas en ese criterio). Igual que el colegio:
+ * promedio simple redondeado a entero.
  */
 export function promedioGrupo(
   scores: Record<string, number | null>,
@@ -77,7 +78,7 @@ export function promedioGrupo(
     .filter((v): v is number => v !== null && v !== undefined);
   if (vals.length === 0) return null;
   const avg = vals.reduce((a, b) => a + Number(b), 0) / vals.length;
-  return Math.round(avg * 10) / 10;
+  return Math.round(avg);
 }
 
 function tiempoFecha(fecha: string): number {

@@ -1076,6 +1076,47 @@ tr.row-inactive td {
   overflow-y: auto;
 }
 
+/* Modal ancho para la vista previa de la planilla */
+.reporte-modal-ancho {
+  max-width: 96vw;
+  width: 1150px;
+}
+
+.reporte-planilla-wrap {
+  overflow: auto;
+  max-height: 62vh;
+  border: 1px solid #dde1e4;
+  margin: 1rem 0;
+}
+
+.reporte-planilla-table {
+  border-collapse: collapse;
+  font-size: 0.62rem;
+  width: 100%;
+}
+
+.reporte-planilla-table th,
+.reporte-planilla-table td {
+  border: 1px solid #bfbfbf;
+  padding: 0.25rem 0.4rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.reporte-planilla-table td.pl-nombre {
+  text-align: left;
+  white-space: nowrap;
+}
+
+.reporte-planilla-table th.pl-super-maestro { background: #f4b083; }
+.reporte-planilla-table th.pl-super-autoev { background: #ffd965; }
+.reporte-planilla-table th.pl-super-trim { background: #a8d08d; }
+.reporte-planilla-table th.pl-dimension { background: #e7e6e6; }
+.reporte-planilla-table th.pl-total { background: #f4b083; }
+.reporte-planilla-table th.pl-promedio { background: #e7e6e6; }
+.reporte-planilla-table th.pl-criterio { background: #ffffff; font-weight: 600; }
+.reporte-planilla-table th.pl-base { background: #ffffff; }
+
 .reporte-config {
   display: flex;
   gap: 1rem;
