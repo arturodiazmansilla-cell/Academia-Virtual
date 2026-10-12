@@ -578,6 +578,33 @@ table.colegio-tabla {
   height: 1px;
 }
 
+/* Colores de los grupos de criterios (como el módulo Notas del colegio) */
+.colegio-tabla thead th.grupo-ser,
+.reporte-preview-table thead th.grupo-ser {
+  background: #e9e7f5;
+  color: #4a3f8c;
+}
+.colegio-tabla thead th.grupo-saber,
+.reporte-preview-table thead th.grupo-saber {
+  background: #e2eff7;
+  color: #1d5c80;
+}
+.colegio-tabla thead th.grupo-hacer,
+.reporte-preview-table thead th.grupo-hacer {
+  background: #fdf3dd;
+  color: #8a5a00;
+}
+.colegio-tabla thead th.grupo-autoevaluacion,
+.reporte-preview-table thead th.grupo-autoevaluacion {
+  background: #e6f4ea;
+  color: #1e6b32;
+}
+.colegio-tabla thead th.grupo-otro,
+.reporte-preview-table thead th.grupo-otro {
+  background: #f1f3f5;
+  color: #495057;
+}
+
 /* Filtros de la página Alumnos */
 .filters-row {
   display: flex;

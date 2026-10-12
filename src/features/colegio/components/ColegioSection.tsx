@@ -4,7 +4,7 @@
 // el curso virtual se liga a un curso/paralelo/materia del colegio
 // y desde aquí se ven sus notas y asistencia (solo lectura).
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { Fragment, useEffect, useRef, useState, type RefObject } from "react";
 import { supabase } from "../../../shared/lib/supabaseClient";
 import {
   callAcademico,
@@ -17,7 +17,7 @@ import {
 } from "../lib/academicoClient";
 
 import { ReporteColegioModal, type ColumnaReporte } from "./ReporteColegioModal";
-import { agruparEvaluaciones, fmtFechaEval } from "../lib/criterios";
+import { agruparEvaluaciones, criterioClase, fmtFechaEval, promedioGrupo } from "../lib/criterios";
 
 interface Vinculo {
   virtual_course_id: string;
@@ -319,17 +319,22 @@ export function ColegioSection({ courseId }: { courseId: string }) {
     if (tab === "notas" && notas) {
       const columnas: ColumnaReporte[] = [
         { texto: "Alumno" },
-        ...gruposEval.flatMap((g) =>
-          g.evaluaciones.map((e) => ({
+        ...gruposEval.flatMap((g) => [
+          ...g.evaluaciones.map((e) => ({
             texto: `${e.title} (${fmtFechaEval(e.evaluation_date)} · máx ${e.maximum_score})`,
             grupo: g.etiqueta,
-          }))
-        ),
-        { texto: "Promedio" },
+            grupoKey: g.key,
+          })),
+          { texto: "Prom.", grupo: g.etiqueta, grupoKey: g.key },
+        ]),
+        { texto: "Prom." },
       ];
       const filas = notasVisibles.map((s) => [
         s.name,
-        ...evalsOrdenadas.map((e) => s.scores[e.id] ?? null),
+        ...gruposEval.flatMap((g) => [
+          ...g.evaluaciones.map((e) => s.scores[e.id] ?? null),
+          promedioGrupo(s.scores, g.evaluaciones),
+        ]),
         s.promedio,
       ]);
       return {
@@ -459,22 +464,31 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                       <tr>
                         <th rowSpan={2}>Alumno</th>
                         {gruposEval.map((g) => (
-                          <th key={g.key} colSpan={g.evaluaciones.length} className="num">
+                          <th
+                            key={g.key}
+                            colSpan={g.evaluaciones.length + 1}
+                            className={`num ${criterioClase(g.key)}`}
+                          >
                             {g.etiqueta}
                           </th>
                         ))}
                         <th rowSpan={2} className="num">
-                          Promedio
+                          Prom.
                         </th>
                       </tr>
                       <tr>
-                        {evalsOrdenadas.map((e) => (
-                          <th key={e.id} className="num">
-                            <span className="eval-titulo">{e.title}</span>
-                            <span className="eval-meta">
-                              {fmtFechaEval(e.evaluation_date)} · máx {e.maximum_score}
-                            </span>
-                          </th>
+                        {gruposEval.map((g) => (
+                          <Fragment key={g.key}>
+                            {g.evaluaciones.map((e) => (
+                              <th key={e.id} className="num">
+                                <span className="eval-titulo">{e.title}</span>
+                                <span className="eval-meta">
+                                  {fmtFechaEval(e.evaluation_date)} · máx {e.maximum_score}
+                                </span>
+                              </th>
+                            ))}
+                            <th className={`num ${criterioClase(g.key)}`}>Prom.</th>
+                          </Fragment>
                         ))}
                       </tr>
                     </thead>
@@ -482,10 +496,17 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                       {notasPage.map((s) => (
                         <tr key={s.id}>
                           <td>{s.name}</td>
-                          {evalsOrdenadas.map((e) => (
-                            <td key={e.id} className="num">
-                              {s.scores[e.id] ?? "—"}
-                            </td>
+                          {gruposEval.map((g) => (
+                            <Fragment key={g.key}>
+                              {g.evaluaciones.map((e) => (
+                                <td key={e.id} className="num">
+                                  {s.scores[e.id] ?? "—"}
+                                </td>
+                              ))}
+                              <td className="num">
+                                {promedioGrupo(s.scores, g.evaluaciones) ?? "—"}
+                              </td>
+                            </Fragment>
                           ))}
                           <td className="num">
                             <strong>{s.promedio ?? "—"}</strong>

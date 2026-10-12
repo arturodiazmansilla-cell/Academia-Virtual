@@ -1,12 +1,12 @@
-# Barra de desplazamiento arriba de la tabla (12/10/2026)
+# Reporte estilo modulo Notas del colegio (12/10/2026)
 
-Agrega una barra de desplazamiento horizontal debajo del buscador,
-sincronizada con la tabla de Notas y de Asistencia del colegio.
-Solo aparece cuando la tabla necesita desplazamiento.
+- Grupos con color como en el colegio: SER /10, SABER /45, HACER /40.
+- Columna "Prom." por cada criterio y Prom. final.
+- Los colores tambien salen en el PDF y el Excel.
 
 Pasos (UN SOLO push para cuidar los creditos de Netlify):
 1. Extrae este zip DENTRO de tu proyecto (acepta sobrescribir)
 2. git add .
-3. git commit -m "Barra de desplazamiento arriba de la tabla del colegio"
+3. git commit -m "Reporte de notas estilo modulo del colegio"
 4. git push
 5. Espera el Published y recarga con Ctrl+F5.

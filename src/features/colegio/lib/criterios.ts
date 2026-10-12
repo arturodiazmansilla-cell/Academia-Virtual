@@ -34,20 +34,50 @@ export function criterioDe(ev: ColegioEvaluation): CriterioKey {
   return "otro";
 }
 
-/** Etiqueta del grupo: los exámenes van en SABER y las tareas en HACER. */
+/** Puntaje máximo oficial de cada dimensión (como en el sistema del colegio). */
+export const DIMENSION_MAX: Record<CriterioKey, number | null> = {
+  ser: 10,
+  saber: 45,
+  hacer: 40,
+  autoevaluacion: 5,
+  otro: null,
+};
+
+/** Etiqueta del grupo como en el módulo Notas del colegio: "SER /10". */
 export function criterioEtiqueta(key: CriterioKey): string {
   switch (key) {
     case "ser":
-      return "SER";
+      return "SER /10";
     case "saber":
-      return "SABER · Exámenes";
+      return "SABER /45";
     case "hacer":
-      return "HACER · Tareas";
+      return "HACER /40";
     case "autoevaluacion":
-      return "Autoevaluación";
+      return "Autoevaluación /5";
     default:
       return "Otras";
   }
+}
+
+/** Clase CSS con el color del grupo (coincide con el módulo Notas del colegio). */
+export function criterioClase(key: CriterioKey): string {
+  return `grupo-${key}`;
+}
+
+/**
+ * Promedio de un alumno en las evaluaciones de un grupo
+ * (null si no tiene notas en ese criterio).
+ */
+export function promedioGrupo(
+  scores: Record<string, number | null>,
+  evaluaciones: ColegioEvaluation[]
+): number | null {
+  const vals = evaluaciones
+    .map((e) => scores[e.id])
+    .filter((v): v is number => v !== null && v !== undefined);
+  if (vals.length === 0) return null;
+  const avg = vals.reduce((a, b) => a + Number(b), 0) / vals.length;
+  return Math.round(avg * 10) / 10;
 }
 
 function tiempoFecha(fecha: string): number {

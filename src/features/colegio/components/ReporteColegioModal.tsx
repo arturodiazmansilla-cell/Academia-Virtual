@@ -18,6 +18,8 @@ interface Props {
 export interface ColumnaReporte {
   texto: string;
   grupo?: string;
+  /** Clave del criterio (ser, saber, hacer…) para darle su color. */
+  grupoKey?: string;
 }
 
 interface GrupoEncabezado {
@@ -25,7 +27,31 @@ interface GrupoEncabezado {
   span: number;
   /** true = columna simple que abarca las dos filas del encabezado */
   rowspan: boolean;
+  key?: string;
 }
+
+/** Colores de los grupos (igual que el módulo Notas del colegio). */
+const GRUPO_FILL_RGB: Record<string, [number, number, number]> = {
+  ser: [233, 231, 245],
+  saber: [226, 239, 247],
+  hacer: [253, 243, 221],
+  autoevaluacion: [230, 244, 234],
+  otro: [241, 243, 245],
+};
+const GRUPO_FILL_HEX: Record<string, string> = {
+  ser: "E9E7F5",
+  saber: "E2EFF7",
+  hacer: "FDF3DD",
+  autoevaluacion: "E6F4EA",
+  otro: "F1F3F5",
+};
+const GRUPO_TEXTO_HEX: Record<string, string> = {
+  ser: "4A3F8C",
+  saber: "1D5C80",
+  hacer: "8A5A00",
+  autoevaluacion: "1E6B32",
+  otro: "495057",
+};
 
 /** Primera fila del encabezado: fusiona columnas consecutivas del mismo grupo. */
 function filaGrupos(columnas: ColumnaReporte[]): GrupoEncabezado[] {
@@ -35,10 +61,20 @@ function filaGrupos(columnas: ColumnaReporte[]): GrupoEncabezado[] {
     if (c.grupo && last && !last.rowspan && last.texto === c.grupo) {
       last.span += 1;
     } else {
-      grupos.push({ texto: c.grupo ?? c.texto, span: 1, rowspan: !c.grupo });
+      grupos.push({ texto: c.grupo ?? c.texto, span: 1, rowspan: !c.grupo, key: c.grupoKey });
     }
   }
   return grupos;
+}
+
+/** Grupo al que pertenece una columna (null si es columna simple). */
+function grupoDeColumna(grupos: GrupoEncabezado[], colIdx: number): GrupoEncabezado | null {
+  let c = 0;
+  for (const g of grupos) {
+    if (colIdx >= c && colIdx < c + g.span) return g.rowspan ? null : g;
+    c += g.span;
+  }
+  return null;
 }
 
 // Carta: 216 x 279 mm, vertical
@@ -83,14 +119,22 @@ export function ReporteColegioModal({ titulo, subtitulo, columnas, filas, nombre
       doc.text(`${subtitulo} · Academia Virtual · ${fecha}`, 14, 22);
       doc.setTextColor(0);
 
-      type CeldaEnc = string | { content: string; colSpan?: number; rowSpan?: number };
+      type CeldaEnc =
+        | string
+        | { content: string; colSpan?: number; rowSpan?: number; styles?: Record<string, unknown> };
       const head: CeldaEnc[][] = tieneGrupos
         ? [
-            grupos.map((g) =>
-              g.rowspan
-                ? { content: g.texto, rowSpan: 2 }
-                : { content: g.texto, colSpan: g.span }
-            ),
+            grupos.map((g) => {
+              if (g.rowspan) return { content: g.texto, rowSpan: 2 };
+              const fill = g.key ? GRUPO_FILL_RGB[g.key] : undefined;
+              return {
+                content: g.texto,
+                colSpan: g.span,
+                styles: fill
+                  ? { fillColor: fill, textColor: [40, 40, 40] as [number, number, number] }
+                  : undefined,
+              };
+            }),
             textosDetalle,
           ]
         : [textosColumnas];
@@ -153,9 +197,14 @@ export function ReporteColegioModal({ titulo, subtitulo, columnas, filas, nombre
         columnas.forEach((_, colIdx) => {
           const celda = XLSX.utils.encode_cell({ r: hr, c: colIdx });
           if (!hoja[celda]) return;
+          const g = hr === 0 && tieneGrupos ? grupoDeColumna(grupos, colIdx) : null;
+          const esGrupo = g && g.key && GRUPO_FILL_HEX[g.key];
           hoja[celda].s = {
-            font: { bold: true, color: { rgb: "FFFFFF" } },
-            fill: { fgColor: { rgb: "163A33" } },
+            font: {
+              bold: true,
+              color: { rgb: esGrupo ? GRUPO_TEXTO_HEX[g.key!] : "FFFFFF" },
+            },
+            fill: { fgColor: { rgb: esGrupo ? GRUPO_FILL_HEX[g.key!] : "163A33" } },
             alignment: { horizontal: "center", vertical: "center", wrapText: true },
             border: bordeCelda,
           };
@@ -212,7 +261,12 @@ export function ReporteColegioModal({ titulo, subtitulo, columnas, filas, nombre
                 {tieneGrupos && (
                   <tr>
                     {grupos.map((g, i) => (
-                      <th key={i} colSpan={g.span} rowSpan={g.rowspan ? 2 : 1}>
+                      <th
+                        key={i}
+                        colSpan={g.span}
+                        rowSpan={g.rowspan ? 2 : 1}
+                        className={g.key && !g.rowspan ? `grupo-${g.key}` : undefined}
+                      >
                         {g.texto}
                       </th>
                     ))}
