@@ -81,6 +81,12 @@ export function promedioGrupo(
   return Math.round(avg);
 }
 
+/** Redondea una nota a entero (null se mantiene null). */
+export function redondearNota(v: number | null | undefined): number | null {
+  if (v === null || v === undefined) return null;
+  return Math.round(Number(v));
+}
+
 function tiempoFecha(fecha: string): number {
   const t = new Date(fecha + "T00:00:00").getTime();
   return Number.isNaN(t) ? Number.POSITIVE_INFINITY : t;

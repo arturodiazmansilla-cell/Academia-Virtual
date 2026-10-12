@@ -19,7 +19,7 @@ import {
 import { ReporteColegioModal, type ColumnaReporte } from "./ReporteColegioModal";
 import { ReportePlanillaModal } from "./ReportePlanillaModal";
 import { construirPlanilla } from "../lib/planilla";
-import { agruparEvaluaciones, criterioClase, fmtFechaEval, promedioGrupo } from "../lib/criterios";
+import { agruparEvaluaciones, criterioClase, fmtFechaEval, promedioGrupo, redondearNota } from "../lib/criterios";
 
 interface Vinculo {
   virtual_course_id: string;
@@ -483,7 +483,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                             <Fragment key={g.key}>
                               {g.evaluaciones.map((e) => (
                                 <td key={e.id} className="num">
-                                  {s.scores[e.id] ?? "—"}
+                                  {redondearNota(s.scores[e.id]) ?? "—"}
                                 </td>
                               ))}
                               <td className="num">
@@ -492,7 +492,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                             </Fragment>
                           ))}
                           <td className="num">
-                            <strong>{s.promedio ?? "—"}</strong>
+                            <strong>{redondearNota(s.promedio) ?? "—"}</strong>
                           </td>
                         </tr>
                       ))}

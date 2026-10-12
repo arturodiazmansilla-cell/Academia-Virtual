@@ -5,7 +5,7 @@
 // dimensión, TOTAL, AUTOEV. y CALIFICACIÓN TRIMESTRAL.
 
 import type { ColegioNotaAlumno } from "./academicoClient";
-import { fmtFechaEval, promedioGrupo, type GrupoEvaluaciones } from "./criterios";
+import { fmtFechaEval, promedioGrupo, redondearNota, type GrupoEvaluaciones } from "./criterios";
 
 export type EstiloPlanilla =
   | "titulo"
@@ -116,7 +116,7 @@ export function construirPlanilla(
 
     const celdas: (string | number | null)[] = [i + 1, s.name];
     dimensiones.forEach((g, gi) => {
-      for (const e of g.evaluaciones) celdas.push(s.scores[e.id] ?? null);
+      for (const e of g.evaluaciones) celdas.push(redondearNota(s.scores[e.id]));
       celdas.push(promDim[gi]);
     });
     celdas.push(total, autoev, trimestral);

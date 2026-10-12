@@ -9,7 +9,7 @@ import {
   type ColegioEvaluation,
   type ColegioNotaAlumno,
 } from "../lib/academicoClient";
-import { agruparEvaluaciones, fmtFechaEval } from "../lib/criterios";
+import { agruparEvaluaciones, fmtFechaEval, redondearNota } from "../lib/criterios";
 
 interface MisNotas {
   evaluations: ColegioEvaluation[];
@@ -90,7 +90,7 @@ export function MisNotasColegio({ courseId }: { courseId: string }) {
                         <td>{g.etiqueta.split(" · ")[0]}</td>
                         <td>{e.title}</td>
                         <td>{fmtFechaEval(e.evaluation_date)}</td>
-                        <td className="num">{data.student!.scores[e.id] ?? "—"}</td>
+                        <td className="num">{redondearNota(data.student!.scores[e.id]) ?? "—"}</td>
                         <td className="num">{e.maximum_score}</td>
                       </tr>
                     ))}
@@ -100,7 +100,7 @@ export function MisNotasColegio({ courseId }: { courseId: string }) {
             </table>
           </div>
           <p style={{ marginTop: "0.75rem" }}>
-            <strong>Promedio: {data.student.promedio ?? "—"}</strong>
+            <strong>Promedio: {redondearNota(data.student.promedio) ?? "—"}</strong>
           </p>
         </>
       )}
