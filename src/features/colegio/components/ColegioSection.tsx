@@ -4,7 +4,7 @@
 // el curso virtual se liga a un curso/paralelo/materia del colegio
 // y desde aquí se ven sus notas y asistencia (solo lectura).
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { supabase } from "../../../shared/lib/supabaseClient";
 import {
   callAcademico,
@@ -27,6 +27,48 @@ interface Vinculo {
   colegio_paralelo_nombre: string;
   colegio_materia_id: string | null;
   colegio_materia_nombre: string;
+}
+
+/** Barra de desplazamiento horizontal ubicada arriba de la tabla,
+ *  sincronizada en ambos sentidos con el desplazamiento de la tabla. */
+function BarraScrollArriba({ targetRef }: { targetRef: RefObject<HTMLDivElement | null> }) {
+  const barraRef = useRef<HTMLDivElement | null>(null);
+  const rellenoRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const tabla = targetRef.current;
+    const barra = barraRef.current;
+    const relleno = rellenoRef.current;
+    if (!tabla || !barra || !relleno) return;
+
+    const actualizar = () => {
+      relleno.style.width = `${tabla.scrollWidth}px`;
+      // Solo se muestra si la tabla realmente necesita desplazamiento
+      barra.style.display = tabla.scrollWidth > tabla.clientWidth + 1 ? "" : "none";
+    };
+    actualizar();
+
+    const alMoverBarra = () => {
+      tabla.scrollLeft = barra.scrollLeft;
+    };
+    const alMoverTabla = () => {
+      barra.scrollLeft = tabla.scrollLeft;
+    };
+    barra.addEventListener("scroll", alMoverBarra);
+    tabla.addEventListener("scroll", alMoverTabla);
+    window.addEventListener("resize", actualizar);
+    return () => {
+      barra.removeEventListener("scroll", alMoverBarra);
+      tabla.removeEventListener("scroll", alMoverTabla);
+      window.removeEventListener("resize", actualizar);
+    };
+  }, [targetRef]);
+
+  return (
+    <div ref={barraRef} className="colegio-scroll-top" aria-hidden="true">
+      <div ref={rellenoRef} className="colegio-scroll-top-inner" />
+    </div>
+  );
 }
 
 export function ColegioSection({ courseId }: { courseId: string }) {
@@ -53,6 +95,8 @@ export function ColegioSection({ courseId }: { courseId: string }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 15;
+  const notasWrapRef = useRef<HTMLDivElement | null>(null);
+  const asistenciaWrapRef = useRef<HTMLDivElement | null>(null);
 
   async function loadVinculo() {
     setLoading(true);
@@ -404,7 +448,12 @@ export function ColegioSection({ courseId }: { courseId: string }) {
               ) : notasPage.length === 0 ? (
                 <p>Sin alumnos que coincidan con la búsqueda.</p>
               ) : (
-                <div className="colegio-tabla-wrap">
+                <>
+                  <BarraScrollArriba
+                    key={`notas-${safePage}-${search}-${evalsOrdenadas.length}`}
+                    targetRef={notasWrapRef}
+                  />
+                  <div className="colegio-tabla-wrap" ref={notasWrapRef}>
                   <table className="colegio-tabla">
                     <thead>
                       <tr>
@@ -446,6 +495,7 @@ export function ColegioSection({ courseId }: { courseId: string }) {
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
               {renderPaginacion()}
             </>
@@ -460,7 +510,11 @@ export function ColegioSection({ courseId }: { courseId: string }) {
               ) : (
                 <>
                   <p className="course-meta">{asistencia.sessions} sesiones registradas.</p>
-                  <div className="colegio-tabla-wrap">
+                  <BarraScrollArriba
+                    key={`asis-${safePage}-${search}-${asistencia.sessions}`}
+                    targetRef={asistenciaWrapRef}
+                  />
+                  <div className="colegio-tabla-wrap" ref={asistenciaWrapRef}>
                     <table className="colegio-tabla">
                       <thead>
                         <tr>

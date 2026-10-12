@@ -566,6 +566,18 @@ table.colegio-tabla {
   margin-top: 0.15rem;
 }
 
+/* Barra de desplazamiento horizontal ubicada arriba de la tabla del colegio
+   (sincronizada con el desplazamiento de la tabla) */
+.colegio-scroll-top {
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 16px;
+  margin-bottom: 0.5rem;
+}
+.colegio-scroll-top-inner {
+  height: 1px;
+}
+
 /* Filtros de la página Alumnos */
 .filters-row {
   display: flex;
